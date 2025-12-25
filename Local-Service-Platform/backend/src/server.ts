@@ -9,6 +9,7 @@ import providerRoutes from './routes/provider.routes';
 import bookingRoutes from './routes/booking.routes';
 import serviceRoutes from './routes/service.routes';
 import reviewRoutes from './routes/review.routes';
+import seedRoutes from './routes/seed.routes';
 import { errorHandler } from './middleware/error.middleware';
 
 // Load environment variables
@@ -38,6 +39,7 @@ app.use('/api/providers', providerRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/seed', seedRoutes); // TEMPORARY: Remove after seeding
 
 // Error handling middleware
 app.use(errorHandler);
