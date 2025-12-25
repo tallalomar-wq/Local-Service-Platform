@@ -4,12 +4,19 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const databaseUrl = process.env.DATABASE_URL || 'sqlite:./local_service.db';
+const isProduction = process.env.NODE_ENV === 'production';
 
 export const sequelize = new Sequelize(databaseUrl, {
-  logging: console.log,
+  logging: isProduction ? false : console.log,
   define: {
     timestamps: true,
   },
+  dialectOptions: isProduction && databaseUrl.startsWith('postgres') ? {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  } : {},
 });
 
 export const testConnection = async () => {
