@@ -13,6 +13,9 @@ import Bookings from './pages/Bookings';
 import ProviderProfile from './pages/ProviderProfile';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyPhone from './pages/VerifyPhone';
+import Subscription from './pages/Subscription';
+import SubscriptionSuccess from './pages/SubscriptionSuccess';
+import SubscriptionCancel from './pages/SubscriptionCancel';
 
 const PrivateRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -56,6 +59,9 @@ function AppRoutes() {
               </PrivateRoute>
             }
           />
+          <Route path="/subscription" element={<Subscription />} />
+          <Route path="/subscription/success" element={<SubscriptionSuccess />} />
+          <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
         </Routes>
       </Layout>
     </Router>

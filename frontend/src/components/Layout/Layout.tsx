@@ -43,9 +43,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     My Bookings
                   </Link>
                   {user?.role === 'provider' && (
-                    <Link to="/provider-profile" className="text-gray-700 hover:text-primary-600">
-                      My Profile
-                    </Link>
+                    <>
+                      <Link to="/provider-profile" className="text-gray-700 hover:text-primary-600">
+                        My Profile
+                      </Link>
+                      <Link to="/subscription" className="text-gray-700 hover:text-primary-600">
+                        Subscription
+                      </Link>
+                    </>
                   )}
                   <button
                     onClick={logout}
