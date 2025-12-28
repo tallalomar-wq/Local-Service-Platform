@@ -21,9 +21,6 @@ export interface ProviderProfileAttributes {
   subscriptionStatus: 'active' | 'inactive' | 'trial' | 'cancelled';
   subscriptionStartDate?: Date;
   subscriptionEndDate?: Date;
-  subscriptionPlanId?: number;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
   rating?: number;
   totalReviews: number;
   completedBookings: number;
@@ -55,9 +52,6 @@ class ProviderProfile extends Model<ProviderProfileAttributes, ProviderProfileCr
   public subscriptionStatus!: 'active' | 'inactive' | 'trial' | 'cancelled';
   public subscriptionStartDate?: Date;
   public subscriptionEndDate?: Date;
-  public subscriptionPlanId?: number;
-  public stripeCustomerId?: string;
-  public stripeSubscriptionId?: string;
   public rating?: number;
   public totalReviews!: number;
   public completedBookings!: number;
@@ -139,24 +133,6 @@ ProviderProfile.init(
     },
     subscriptionEndDate: {
       type: DataTypes.DATE,
-    },
-    subscriptionPlanId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'subscription_plans',
-        key: 'id',
-      },
-    },
-    stripeCustomerId: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      field: 'stripe_customer_id',
-    },
-    stripeSubscriptionId: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      field: 'stripe_subscription_id',
     },
     rating: {
       type: DataTypes.FLOAT,

@@ -3,7 +3,6 @@ import { ServiceCategory } from './ServiceCategory.model';
 import { ProviderProfile } from './ProviderProfile.model';
 import { Booking } from './Booking.model';
 import { Review } from './Review.model';
-import SubscriptionPlan from './SubscriptionPlan.model';
 
 // User to ProviderProfile (1:1)
 User.hasOne(ProviderProfile, {
@@ -23,16 +22,6 @@ ServiceCategory.hasMany(ProviderProfile, {
 ProviderProfile.belongsTo(ServiceCategory, {
   foreignKey: 'serviceCategoryId',
   as: 'serviceCategory',
-});
-
-// SubscriptionPlan to ProviderProfile (1:Many)
-SubscriptionPlan.hasMany(ProviderProfile, {
-  foreignKey: 'subscriptionPlanId',
-  as: 'providers',
-});
-ProviderProfile.belongsTo(SubscriptionPlan, {
-  foreignKey: 'subscriptionPlanId',
-  as: 'subscriptionPlan',
 });
 
 // User (customer) to Booking (1:Many)
@@ -95,4 +84,4 @@ Review.belongsTo(ProviderProfile, {
   as: 'provider',
 });
 
-export { User, ServiceCategory, ProviderProfile, Booking, Review, SubscriptionPlan };
+export { User, ServiceCategory, ProviderProfile, Booking, Review };

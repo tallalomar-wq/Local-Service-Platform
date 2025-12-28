@@ -1,5 +1,5 @@
 import { sequelize } from '../config/database';
-import { User, ServiceCategory, ProviderProfile, Booking, Review, SubscriptionPlan } from '../models';
+import { User, ServiceCategory, ProviderProfile, Booking, Review } from '../models';
 import bcrypt from 'bcryptjs';
 
 const seed = async () => {
@@ -9,62 +9,6 @@ const seed = async () => {
     // Force sync to reset database
     await sequelize.sync({ force: true });
     console.log('Database synced');
-
-    // Create subscription plans first
-    const plans = await SubscriptionPlan.bulkCreate([
-      {
-        name: 'Free Trial',
-        stripePriceId: '',
-        price: 0,
-        interval: 'month',
-        features: [
-          '5 service requests per month',
-          'Basic profile listing',
-          'Email notifications',
-          '10% commission on bookings'
-        ],
-        commissionRate: 10.0,
-        maxServiceRequests: 5,
-        isActive: true,
-        displayOrder: 1,
-      },
-      {
-        name: 'Basic',
-        stripePriceId: process.env.STRIPE_BASIC_PRICE_ID || '',
-        price: 29.00,
-        interval: 'month',
-        features: [
-          'Unlimited service requests',
-          'Featured profile listing',
-          'Email & SMS notifications',
-          'Priority support',
-          '8% commission on bookings'
-        ],
-        commissionRate: 8.0,
-        maxServiceRequests: null,
-        isActive: true,
-        displayOrder: 2,
-      },
-      {
-        name: 'Pro',
-        stripePriceId: process.env.STRIPE_PRO_PRICE_ID || '',
-        price: 49.00,
-        interval: 'month',
-        features: [
-          'Everything in Basic',
-          'Top placement in search',
-          'Advanced analytics',
-          'Custom branding',
-          '5% commission on bookings',
-          'Dedicated account manager'
-        ],
-        commissionRate: 5.0,
-        maxServiceRequests: null,
-        isActive: true,
-        displayOrder: 3,
-      },
-    ]);
-    console.log(`Created ${plans.length} subscription plans`);
 
     // Create service categories
     const categories = await ServiceCategory.bulkCreate([
