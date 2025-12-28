@@ -1,5 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/database';
+import { sequelize } from '../config/database';
 
 interface SubscriptionPlanAttributes {
   id?: number;
@@ -9,7 +9,7 @@ interface SubscriptionPlanAttributes {
   interval: 'month' | 'year';
   features: string[];
   commissionRate: number;
-  maxServiceRequests: number;
+  maxServiceRequests?: number | null;
   isActive: boolean;
   displayOrder: number;
   createdAt?: Date;
@@ -24,7 +24,7 @@ class SubscriptionPlan extends Model<SubscriptionPlanAttributes> implements Subs
   public interval!: 'month' | 'year';
   public features!: string[];
   public commissionRate!: number;
-  public maxServiceRequests!: number;
+  public maxServiceRequests?: number | null;
   public isActive!: boolean;
   public displayOrder!: number;
   public readonly createdAt!: Date;

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ProviderProfile, ServiceCategory, User, Review } from '../models';
+import { ProviderProfile, ServiceCategory, User, Review, SubscriptionPlan } from '../models';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { Op } from 'sequelize';
 
@@ -45,6 +45,11 @@ export const getAllProviders = async (req: Request, res: Response): Promise<void
           as: 'serviceCategory',
           attributes: ['id', 'name', 'icon'],
         },
+        {
+          model: SubscriptionPlan,
+          as: 'subscriptionPlan',
+          attributes: ['id', 'name', 'price', 'interval', 'features', 'commissionRate'],
+        },
       ],
       order: [['rating', 'DESC']],
     });
@@ -71,6 +76,11 @@ export const getProviderById = async (req: Request, res: Response): Promise<void
           model: ServiceCategory,
           as: 'serviceCategory',
           attributes: ['id', 'name', 'description', 'icon'],
+        },
+        {
+          model: SubscriptionPlan,
+          as: 'subscriptionPlan',
+          attributes: ['id', 'name', 'price', 'interval', 'features', 'commissionRate'],
         },
         {
           model: Review,

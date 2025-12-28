@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { SubscriptionController } from '../controllers/subscription.controller';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -10,31 +10,31 @@ router.get('/plans', SubscriptionController.getPlans);
 // Protected routes (require authentication)
 router.post(
   '/checkout',
-  authMiddleware,
+  authenticate,
   SubscriptionController.createCheckoutSession
 );
 
 router.get(
   '/current',
-  authMiddleware,
+  authenticate,
   SubscriptionController.getCurrentSubscription
 );
 
 router.post(
   '/cancel',
-  authMiddleware,
+  authenticate,
   SubscriptionController.cancelSubscription
 );
 
 router.put(
   '/update',
-  authMiddleware,
+  authenticate,
   SubscriptionController.updateSubscription
 );
 
 router.post(
   '/portal',
-  authMiddleware,
+  authenticate,
   SubscriptionController.createPortalSession
 );
 

@@ -64,6 +64,9 @@ class ProviderProfile extends Model<ProviderProfileAttributes, ProviderProfileCr
   public isVerified!: boolean;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Association properties (set by Sequelize)
+  public readonly subscriptionPlan?: any;
 }
 
 ProviderProfile.init(

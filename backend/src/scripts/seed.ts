@@ -30,7 +30,7 @@ const seed = async () => {
       },
       {
         name: 'Basic',
-        stripePriceId: process.env.STRIPE_BASIC_PRICE_ID || '',
+        stripePriceId: 'price_1SjO9WLpOtnxFiKYKsR68yuM',
         price: 29.00,
         interval: 'month',
         features: [
@@ -47,7 +47,7 @@ const seed = async () => {
       },
       {
         name: 'Pro',
-        stripePriceId: process.env.STRIPE_PRO_PRICE_ID || '',
+        stripePriceId: 'price_1SjOA1LpOtnxFiKYaBvA0tz6',
         price: 49.00,
         interval: 'month',
         features: [

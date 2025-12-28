@@ -281,8 +281,17 @@ const ProviderProfile: React.FC = () => {
             </div>
 
             <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Subscription Status</h3>
-              <p className="text-lg capitalize">{profileData.subscriptionStatus}</p>
+              <h3 className="text-gray-600 font-semibold mb-1">Subscription Plan</h3>
+              <p className="text-lg">
+                {profileData.subscriptionPlan ? (
+                  <span className="font-semibold text-blue-600">
+                    {profileData.subscriptionPlan.name} 
+                    <span className="text-gray-600 font-normal"> - ${profileData.subscriptionPlan.price}/month</span>
+                  </span>
+                ) : (
+                  <span className="capitalize">{profileData.subscriptionStatus}</span>
+                )}
+              </p>
             </div>
           </div>
         </div>
