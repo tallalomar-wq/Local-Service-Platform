@@ -32,6 +32,7 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// Register API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/bookings', bookingRoutes);
@@ -39,6 +40,8 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/seed', seedRoutes);
+
+console.log('All API routes registered successfully');
 
 app.use(errorHandler);
 
