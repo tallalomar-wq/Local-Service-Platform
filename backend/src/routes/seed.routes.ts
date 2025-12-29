@@ -1,27 +1,97 @@
 import { Router, Request, Response } from 'express';
 import { sequelize } from '../config/database';
 import { User, ServiceCategory, ProviderProfile } from '../models';
+import SubscriptionPlan from '../models/SubscriptionPlan.model';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
 
-// TEMPORARY: Remove this endpoint after seeding production database
+// Safe seeding endpoint - adds missing data without wiping existing data
 router.post('/initialize', async (_req: Request, res: Response) => {
   try {
-    // Sync database
-    await sequelize.sync({ force: true });
+    // Sync database WITHOUT forcing reset
+    await sequelize.sync({ force: false });
     
-    // Create service categories
-    await ServiceCategory.bulkCreate([
-      { name: 'House Cleaning', description: 'Professional home and office cleaning services', icon: '🧹', isActive: true },
-      { name: 'Lawn Care', description: 'Lawn mowing, trimming, and landscaping services', icon: '🌿', isActive: true },
-      { name: 'Plumbing', description: 'Residential and commercial plumbing services', icon: '🔧', isActive: true },
-      { name: 'Electrical', description: 'Licensed electrical repair and installation', icon: '⚡', isActive: true },
-      { name: 'Handyman', description: 'General home repair and maintenance', icon: '🔨', isActive: true },
-      { name: 'Pet Grooming', description: 'Professional pet grooming and care', icon: '🐕', isActive: true },
-      { name: 'Moving Services', description: 'Residential and commercial moving', icon: '📦', isActive: true },
-      { name: 'Painting', description: 'Interior and exterior painting services', icon: '🎨', isActive: true },
-    ]);
+    const results: any = {};
+    
+    // Create subscription plans only if none exist
+    const planCount = await SubscriptionPlan.count();
+    if (planCount === 0) {
+      await SubscriptionPlan.bulkCreate([
+        {
+          name: 'Free Trial',
+          stripePriceId: '',
+          price: 0,
+          interval: 'month',
+          features: [
+            '5 service requests per month',
+            'Basic profile listing',
+            'Email notifications',
+            '10% commission on bookings'
+          ],
+          commissionRate: 10.0,
+          maxServiceRequests: 5,
+          isActive: true,
+          displayOrder: 1,
+        },
+        {
+          name: 'Basic',
+          stripePriceId: 'price_1SjO9WLpOtnxFiKYKsR68yuM',
+          price: 29.00,
+          interval: 'month',
+          features: [
+            'Unlimited service requests',
+            'Featured profile listing',
+            'Email & SMS notifications',
+            'Priority support',
+            '8% commission on bookings'
+          ],
+          commissionRate: 8.0,
+          maxServiceRequests: null,
+          isActive: true,
+          displayOrder: 2,
+        },
+        {
+          name: 'Pro',
+          stripePriceId: 'price_1SjOA1LpOtnxFiKYaBvA0tz6',
+          price: 49.00,
+          interval: 'month',
+          features: [
+            'Everything in Basic',
+            'Top placement in search',
+            'Advanced analytics',
+            'Custom branding',
+            '5% commission on bookings',
+            'Dedicated account manager'
+          ],
+          commissionRate: 5.0,
+          maxServiceRequests: null,
+          isActive: true,
+          displayOrder: 3,
+        },
+      ]);
+      results.subscriptionPlans = 'Created 3 subscription plans';
+    } else {
+      results.subscriptionPlans = `Skipped - ${planCount} plans already exist`;
+    }
+    
+    // Create service categories only if none exist
+    const categoryCount = await ServiceCategory.count();
+    if (categoryCount === 0) {
+      await ServiceCategory.bulkCreate([
+        { name: 'House Cleaning', description: 'Professional home and office cleaning services', icon: '🧹', isActive: true },
+        { name: 'Lawn Care', description: 'Lawn mowing, trimming, and landscaping services', icon: '🌿', isActive: true },
+        { name: 'Plumbing', description: 'Residential and commercial plumbing services', icon: '🔧', isActive: true },
+        { name: 'Electrical', description: 'Licensed electrical repair and installation', icon: '⚡', isActive: true },
+        { name: 'Handyman', description: 'General home repair and maintenance', icon: '🔨', isActive: true },
+        { name: 'Pet Grooming', description: 'Professional pet grooming and care', icon: '🐕', isActive: true },
+        { name: 'Moving Services', description: 'Residential and commercial moving', icon: '📦', isActive: true },
+        { name: 'Painting', description: 'Interior and exterior painting services', icon: '🎨', isActive: true },
+      ]);
+      results.categories = 'Created 8 service categories';
+    } else {
+      results.categories = `Skipped - ${categoryCount} categories already exist`;
+    }
 
     const hashedPassword = await bcrypt.hash('password123', 10);
 
@@ -114,12 +184,8 @@ router.post('/initialize', async (_req: Request, res: Response) => {
     ]);
 
     res.json({ 
-      message: 'Database seeded successfully!',
-      credentials: {
-        customer: 'john@example.com / password123',
-        provider: 'cleaner@example.com / password123',
-        admin: 'admin@example.com / password123'
-      }
+      message: 'Database seeding completed!',
+      results
     });
   } catch (error) {
     console.error('Seed error:', error);
