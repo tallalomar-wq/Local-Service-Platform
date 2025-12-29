@@ -11,7 +11,7 @@ export const getAllProviders = async (req: Request, res: Response): Promise<void
 
     // If filtering by specific user, return their profile regardless of status
     if (user) {
-      whereClause.userId = user;
+      whereClause.userId = parseInt(user as string, 10);
     } else {
       // Show active and trial subscriptions (for testing)
       whereClause.subscriptionStatus = { [Op.in]: ['active', 'trial'] };
