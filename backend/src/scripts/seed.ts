@@ -6,8 +6,8 @@ const seed = async () => {
   try {
     console.log('Starting database seed...');
 
-    // Force sync to reset database
-    await sequelize.sync({ force: true });
+    // Sync database without forcing reset (preserves existing data)
+    await sequelize.sync({ force: false });
     console.log('Database synced');
 
     // Create subscription plans first

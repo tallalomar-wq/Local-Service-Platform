@@ -111,18 +111,26 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Normalize email to lowercase
     const normalizedEmail = email.toLowerCase().trim();
 
+    console.log('Login attempt for email:', normalizedEmail);
+
     const user = await User.findOne({ where: { email: normalizedEmail } });
     if (!user) {
+      console.log('User not found:', normalizedEmail);
       res.status(401).json({ message: 'Invalid credentials' });
       return;
     }
 
+    console.log('User found, checking password...');
+
     if (!user.isActive) {
+      console.log('Account is inactive');
       res.status(403).json({ message: 'Account is inactive' });
       return;
     }
 
     const isValidPassword = await user.comparePassword(password);
+    console.log('Password validation result:', isValidPassword);
+    
     if (!isValidPassword) {
       res.status(401).json({ message: 'Invalid credentials' });
       return;
