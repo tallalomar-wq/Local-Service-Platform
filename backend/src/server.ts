@@ -12,6 +12,7 @@ import reviewRoutes from './routes/review.routes';
 import seedRoutes from './routes/seed.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import { errorHandler } from './middleware/error.middleware';
+import { User } from './models';
 
 dotenv.config();
 
@@ -47,6 +48,25 @@ const startServer = async () => {
     console.log('Database connection established successfully.');
     await sequelize.sync({ force: false });
     console.log('Database models synchronized.');
+    
+    // Auto-seed database if empty (production first-time deploy)
+    const userCount = await User.count();
+    if (userCount === 0 && process.env.NODE_ENV === 'production') {
+      console.log('Database is empty. Running seed script...');
+      try {
+        const { exec } = require('child_process');
+        exec('npm run seed', (error: any, stdout: any, stderr: any) => {
+          if (error) {
+            console.error('Seed script error:', error);
+          } else {
+            console.log('Seed script output:', stdout);
+          }
+        });
+      } catch (seedError) {
+        console.error('Failed to run seed script:', seedError);
+      }
+    }
+    
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
