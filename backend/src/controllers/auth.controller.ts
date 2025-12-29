@@ -159,6 +159,27 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const users = await User.findAll({
+      attributes: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'emailVerified', 'phoneVerified', 'createdAt'],
+      order: [['createdAt', 'DESC']],
+    });
+
+    const usersByRole = {
+      customers: users.filter(u => u.role === 'customer'),
+      providers: users.filter(u => u.role === 'provider'),
+      admins: users.filter(u => u.role === 'admin'),
+      total: users.length
+    };
+
+    res.json(usersByRole);
+  } catch (error) {
+    console.error('Get all users error:', error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+};
+
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const user = await User.findByPk(req.user.id, {

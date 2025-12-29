@@ -7,7 +7,8 @@ import {
   verifyEmail,
   verifyPhone,
   resendEmailVerification,
-  resendPhoneVerification
+  resendPhoneVerification,
+  getAllUsers
 } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 
@@ -15,6 +16,7 @@ const router = Router();
 
 router.post('/register', register);
 router.post('/login', login);
+router.get('/users', getAllUsers); // Debug endpoint to view all users
 router.get('/profile', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfile);
 router.post('/verify-email', verifyEmail);
