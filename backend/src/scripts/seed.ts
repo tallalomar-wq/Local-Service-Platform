@@ -11,7 +11,10 @@ const seed = async () => {
     console.log('Database synced');
 
     // Create subscription plans first
-    const plans = await SubscriptionPlan.bulkCreate([
+      // Create subscription plans only if none exist
+      const planCount = await SubscriptionPlan.count();
+      if (planCount === 0) {
+        const plans = await SubscriptionPlan.bulkCreate([
       {
         name: 'Free Trial',
         stripePriceId: '',
@@ -65,59 +68,69 @@ const seed = async () => {
       },
     ]);
     console.log(`Created ${plans.length} subscription plans`);
+      } else {
+        console.log(`Skipped creating subscription plans - ${planCount} plans already exist`);
+      }
 
-    // Create service categories
-    const categories = await ServiceCategory.bulkCreate([
-      {
-        name: 'House Cleaning',
-        description: 'Professional home and office cleaning services',
-        icon: '🧹',
-        isActive: true,
-      },
-      {
-        name: 'Lawn Care',
-        description: 'Lawn mowing, trimming, and landscaping services',
-        icon: '🌿',
-        isActive: true,
-      },
-      {
-        name: 'Plumbing',
-        description: 'Residential and commercial plumbing services',
-        icon: '🔧',
-        isActive: true,
-      },
-      {
-        name: 'Electrical',
-        description: 'Licensed electrical repair and installation',
-        icon: '⚡',
-        isActive: true,
-      },
-      {
-        name: 'Handyman',
-        description: 'General home repair and maintenance',
-        icon: '🔨',
-        isActive: true,
-      },
-      {
-        name: 'Pet Grooming',
-        description: 'Professional pet grooming and care',
-        icon: '🐕',
-        isActive: true,
-      },
-      {
-        name: 'Moving Services',
-        description: 'Residential and commercial moving',
-        icon: '📦',
-        isActive: true,
-      },
-      {
-        name: 'Painting',
-        description: 'Interior and exterior painting services',
-        icon: '🎨',
-        isActive: true,
-      },
-    ]);
-    console.log(`Created ${categories.length} service categories`);
+    // Create service categories only if none exist
+    const categoryCount = await ServiceCategory.count();
+    let categories;
+    if (categoryCount === 0) {
+      categories = await ServiceCategory.bulkCreate([
+        {
+          name: 'House Cleaning',
+          description: 'Professional home and office cleaning services',
+          icon: '🧹',
+          isActive: true,
+        },
+        {
+          name: 'Lawn Care',
+          description: 'Lawn mowing, trimming, and landscaping services',
+          icon: '🌿',
+          isActive: true,
+        },
+        {
+          name: 'Plumbing',
+          description: 'Residential and commercial plumbing services',
+          icon: '🔧',
+          isActive: true,
+        },
+        {
+          name: 'Electrical',
+          description: 'Licensed electrical repair and installation',
+          icon: '⚡',
+          isActive: true,
+        },
+        {
+          name: 'Handyman',
+          description: 'General home repair and maintenance',
+          icon: '🔨',
+          isActive: true,
+        },
+        {
+          name: 'Pet Grooming',
+          description: 'Professional pet grooming and care',
+          icon: '🐕',
+          isActive: true,
+        },
+        {
+          name: 'Moving Services',
+          description: 'Residential and commercial moving',
+          icon: '📦',
+          isActive: true,
+        },
+        {
+          name: 'Painting',
+          description: 'Interior and exterior painting services',
+          icon: '🎨',
+          isActive: true,
+        },
+      ]);
+      console.log(`Created ${categories.length} service categories`);
+    } else {
+      categories = await ServiceCategory.findAll();
+      console.log(`Skipped creating service categories - ${categoryCount} categories already exist`);
+    }
 
     // Create sample users (customers)
     const hashedPassword = await bcrypt.hash('password123', 10);
