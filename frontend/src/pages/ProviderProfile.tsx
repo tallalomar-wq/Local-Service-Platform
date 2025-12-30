@@ -62,9 +62,9 @@ const ProviderProfile: React.FC = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await api.get(`/providers?user=${user?.id}`);
-      if (response.data.providers && response.data.providers.length > 0) {
-        const profile = response.data.providers[0];
+      const response = await api.get('/providers/me');
+      if (response.data && response.data.profile) {
+        const profile = response.data.profile;
         setHasProfile(true);
         setProfileData(profile);
         setFormData({
@@ -85,79 +85,49 @@ const ProviderProfile: React.FC = () => {
       } else {
         // No profile found - reset to empty form
         setHasProfile(false);
-        const fetchProfile = async () => {
-          try {
-            const response = await api.get('/providers/me');
-            if (response.data && response.data.profile) {
-              const profile = response.data.profile;
-              setHasProfile(true);
-              setProfileData(profile);
-              setFormData({
-                businessName: profile.businessName || '',
-                bio: profile.bio || '',
-                serviceCategoryId: String(profile.serviceCategoryId || ''),
-                address: profile.address || '',
-                city: profile.city || '',
-                state: profile.state || '',
-                zipCode: profile.zipCode || '',
-                hourlyRate: String(profile.hourlyRate || ''),
-                yearsOfExperience: String(profile.yearsOfExperience || ''),
-                certifications: profile.certifications || '',
-                insurance: profile.insurance || '',
-                availableHours: profile.availableHours || '',
-              });
-              setIsEditing(false);
-            } else {
-              // No profile found - reset to empty form
-              setHasProfile(false);
-              setProfileData(null);
-              setFormData({
-                businessName: '',
-                bio: '',
-                serviceCategoryId: '',
-                address: '',
-                city: '',
-                state: '',
-                zipCode: '',
-                hourlyRate: '',
-                yearsOfExperience: '',
-                certifications: '',
-                insurance: '',
-                availableHours: '',
-              });
-              setIsEditing(true);
-            }
-          } catch (err: any) {
-            // If 404, treat as no profile (show empty form)
-            if (err.response && err.response.status === 404) {
-              setHasProfile(false);
-              setProfileData(null);
-              setFormData({
-                businessName: '',
-                bio: '',
-                serviceCategoryId: '',
-                address: '',
-                city: '',
-                state: '',
-                zipCode: '',
-                hourlyRate: '',
-                yearsOfExperience: '',
-                certifications: '',
-                insurance: '',
-                availableHours: '',
-              });
-              setIsEditing(true);
-            } else {
-              console.error('Error fetching profile:', err);
-              setError('Failed to load provider profile.');
-            }
-          }
-        };
-        setSuccess('Profile created successfully! Please logout and login again for changes to take effect.');
-        // Refresh to get the created profile data
-        await fetchProfile();
+        setProfileData(null);
+        setFormData({
+          businessName: '',
+          bio: '',
+          serviceCategoryId: '',
+          address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          hourlyRate: '',
+          yearsOfExperience: '',
+          certifications: '',
+          insurance: '',
+          availableHours: '',
+        });
+        setIsEditing(true);
       }
     } catch (err: any) {
+      // If 404, treat as no profile (show empty form)
+      if (err.response && err.response.status === 404) {
+        setHasProfile(false);
+        setProfileData(null);
+        setFormData({
+          businessName: '',
+          bio: '',
+          serviceCategoryId: '',
+          address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          hourlyRate: '',
+          yearsOfExperience: '',
+          certifications: '',
+          insurance: '',
+          availableHours: '',
+        });
+        setIsEditing(true);
+      } else {
+        console.error('Error fetching profile:', err);
+        setError('Failed to load provider profile.');
+      }
+    }
+  };
       console.error('Save error:', err);
       console.error('Error response:', err.response);
       const errorMsg = err.response?.data?.message || err.message || 'Error saving profile';
