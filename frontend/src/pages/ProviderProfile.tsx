@@ -85,70 +85,74 @@ const ProviderProfile: React.FC = () => {
       } else {
         // No profile found - reset to empty form
         setHasProfile(false);
-        setProfileData(null);
-        setFormData({
-          businessName: '',
-          bio: '',
-          serviceCategoryId: '',
-          address: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          hourlyRate: '',
-          yearsOfExperience: '',
-          certifications: '',
-          insurance: '',
-          availableHours: '',
-        });
-        setIsEditing(true);
-      }
-    } catch (err: any) {
-      console.error('Error fetching profile:', err);
-      // Reset form on error
-      setHasProfile(false);
-      setProfileData(null);
-      setFormData({
-        businessName: '',
-        bio: '',
-        serviceCategoryId: '',
-        address: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        hourlyRate: '',
-        yearsOfExperience: '',
-        certifications: '',
-        insurance: '',
-        availableHours: '',
-      });
-      setIsEditing(true);
-      setError('Error loading profile. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setSaving(true);
-
-    try {
-      if (hasProfile) {
-        await api.put('/providers', formData);
-        setSuccess('Profile updated successfully!');
-        setIsEditing(false);
-        await fetchProfile();
-      } else {
-        await api.post('/providers', formData);
+        const fetchProfile = async () => {
+          try {
+            const response = await api.get('/providers/me');
+            if (response.data && response.data.profile) {
+              const profile = response.data.profile;
+              setHasProfile(true);
+              setProfileData(profile);
+              setFormData({
+                businessName: profile.businessName || '',
+                bio: profile.bio || '',
+                serviceCategoryId: String(profile.serviceCategoryId || ''),
+                address: profile.address || '',
+                city: profile.city || '',
+                state: profile.state || '',
+                zipCode: profile.zipCode || '',
+                hourlyRate: String(profile.hourlyRate || ''),
+                yearsOfExperience: String(profile.yearsOfExperience || ''),
+                certifications: profile.certifications || '',
+                insurance: profile.insurance || '',
+                availableHours: profile.availableHours || '',
+              });
+              setIsEditing(false);
+            } else {
+              // No profile found - reset to empty form
+              setHasProfile(false);
+              setProfileData(null);
+              setFormData({
+                businessName: '',
+                bio: '',
+                serviceCategoryId: '',
+                address: '',
+                city: '',
+                state: '',
+                zipCode: '',
+                hourlyRate: '',
+                yearsOfExperience: '',
+                certifications: '',
+                insurance: '',
+                availableHours: '',
+              });
+              setIsEditing(true);
+            }
+          } catch (err: any) {
+            // If 404, treat as no profile (show empty form)
+            if (err.response && err.response.status === 404) {
+              setHasProfile(false);
+              setProfileData(null);
+              setFormData({
+                businessName: '',
+                bio: '',
+                serviceCategoryId: '',
+                address: '',
+                city: '',
+                state: '',
+                zipCode: '',
+                hourlyRate: '',
+                yearsOfExperience: '',
+                certifications: '',
+                insurance: '',
+                availableHours: '',
+              });
+              setIsEditing(true);
+            } else {
+              console.error('Error fetching profile:', err);
+              setError('Failed to load provider profile.');
+            }
+          }
+        };
         setSuccess('Profile created successfully! Please logout and login again for changes to take effect.');
         // Refresh to get the created profile data
         await fetchProfile();
