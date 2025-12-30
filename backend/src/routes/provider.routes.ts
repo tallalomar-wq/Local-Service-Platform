@@ -11,7 +11,7 @@ import { authenticate, authorize } from '../middleware/auth.middleware';
 const router = Router();
 
 router.get('/', getAllProviders);
-router.get('/me', authenticate, authorize('provider'), getMyProviderProfile);
+router.get('/me', authenticate, getMyProviderProfile);
 router.get('/:id', getProviderById);
 router.post('/', authenticate, createProviderProfile);
 router.put('/', authenticate, authorize('provider'), updateProviderProfile);
