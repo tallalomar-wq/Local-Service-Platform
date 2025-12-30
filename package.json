@@ -16,7 +16,6 @@
   "author": "Tallal Omar",
   "license": "MIT",
   "devDependencies": {
-    "@types/nodemailer": "^7.0.4",
     "concurrently": "^8.2.2"
   }
 }
