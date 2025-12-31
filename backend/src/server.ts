@@ -19,6 +19,13 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
+
+// Register Stripe webhook route BEFORE any body parser
+import subscriptionRoutes from './routes/subscription.routes';
+import { SubscriptionController } from './controllers/subscription.controller';
+import express from 'express';
+app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json' }), SubscriptionController.handleWebhook);
+
 app.use(helmet());
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',

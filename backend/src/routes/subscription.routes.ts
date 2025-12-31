@@ -38,13 +38,6 @@ router.post(
   SubscriptionController.createPortalSession
 );
 
-// Webhook route (no authentication - verified by Stripe signature)
-import express from 'express';
-// ...existing code...
-router.post(
-  '/webhook',
-  express.raw({ type: 'application/json' }), // <-- required for Stripe
-  SubscriptionController.handleWebhook
-);
+
 
 export default router;
