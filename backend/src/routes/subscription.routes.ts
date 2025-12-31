@@ -39,6 +39,12 @@ router.post(
 );
 
 // Webhook route (no authentication - verified by Stripe signature)
-router.post('/webhook', SubscriptionController.handleWebhook);
+import express from 'express';
+// ...existing code...
+router.post(
+  '/webhook',
+  express.raw({ type: 'application/json' }), // <-- required for Stripe
+  SubscriptionController.handleWebhook
+);
 
 export default router;
