@@ -153,7 +153,7 @@ const ProviderProfile: React.FC = () => {
 
       if (hasProfile) {
         // Update profile
-        const response = await api.put('/providers/me', payload);
+        const response = await api.put('/providers', payload);
         setProfileData(response.data.profile);
         setSuccess('Profile updated successfully!');
       } else {
