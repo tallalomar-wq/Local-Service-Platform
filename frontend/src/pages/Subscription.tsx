@@ -118,14 +118,12 @@ const Subscription: React.FC = () => {
               <p className="text-sm text-gray-600">Current Plan</p>
               <p className="text-lg font-semibold text-gray-900">{currentPlan.name}</p>
             </div>
-            {/*
             <button
               onClick={handleManageSubscription}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               Manage Subscription
             </button>
-            */}
           </div>
         </div>
       )}
@@ -173,23 +171,23 @@ const Subscription: React.FC = () => {
                   </li>
                 ))}
               </ul>
-              <button
-                onClick={() => plan.price > 0 && handleSubscribe(plan.id)}
-                disabled={plan.price === 0 || currentPlan?.id === plan.id}
-                className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${
-                  currentPlan?.id === plan.id
-                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                    : plan.name === 'Pro'
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-900 text-white hover:bg-gray-800'
-                } ${plan.price === 0 ? 'cursor-not-allowed opacity-50' : ''}`}
-              >
-                {currentPlan?.id === plan.id
-                  ? 'Current Plan'
-                  : plan.price === 0
-                  ? 'Contact Sales'
-                  : 'Subscribe Now'}
-              </button>
+              {plan.price > 0 && (
+                <button
+                  onClick={() => handleSubscribe(plan.id)}
+                  disabled={currentPlan?.id === plan.id}
+                  className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${
+                    currentPlan?.id === plan.id
+                      ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                      : plan.name === 'Pro'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-900 text-white hover:bg-gray-800'
+                  }`}
+                >
+                  {currentPlan?.id === plan.id
+                    ? 'Current Plan'
+                    : 'Subscribe Now'}
+                </button>
+              )}
             </div>
           </div>
         ))}
