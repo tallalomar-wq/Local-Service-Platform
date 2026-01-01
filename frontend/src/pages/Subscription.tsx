@@ -51,6 +51,8 @@ const Subscription: React.FC = () => {
     }
   };
 
+  // Commented out Stripe Checkout logic
+  /*
   const handleSubscribe = async (planId: number) => {
     try {
       const token = localStorage.getItem('token');
@@ -96,6 +98,32 @@ const Subscription: React.FC = () => {
       alert('Failed to open billing portal. Please try again.');
     }
   };
+  */
+
+  // Direct plan change logic (upgrade/downgrade)
+  const handlePlanChange = async (planId: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+      // Call your backend endpoint to change the plan directly
+      const response = await axios.patch(
+        `${process.env.REACT_APP_API_URL}/subscriptions/update`,
+        { planId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      // Refresh current plan after change
+      fetchCurrentSubscription();
+      alert('Plan changed successfully!');
+    } catch (error) {
+      console.error('Error changing plan:', error);
+      alert('Failed to change plan. Please try again.');
+    }
+  };
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Loading plans...</div>;
@@ -117,12 +145,14 @@ const Subscription: React.FC = () => {
               <p className="text-sm text-gray-600">Current Plan</p>
               <p className="text-lg font-semibold text-gray-900">{currentPlan.name}</p>
             </div>
+            {/*
             <button
               onClick={handleManageSubscription}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               Manage Subscription
             </button>
+            */}
           </div>
         </div>
       )}
@@ -171,8 +201,8 @@ const Subscription: React.FC = () => {
                 ))}
               </ul>
               <button
-                onClick={() => plan.price > 0 && handleSubscribe(plan.id)}
-                disabled={plan.price === 0 || currentPlan?.id === plan.id}
+                onClick={() => handlePlanChange(plan.id)}
+                disabled={currentPlan?.id === plan.id}
                 className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${
                   currentPlan?.id === plan.id
                     ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
@@ -183,9 +213,7 @@ const Subscription: React.FC = () => {
               >
                 {currentPlan?.id === plan.id
                   ? 'Current Plan'
-                  : plan.price === 0
-                  ? 'Contact Sales'
-                  : 'Subscribe Now'}
+                  : 'Change Plan'}
               </button>
             </div>
           </div>
