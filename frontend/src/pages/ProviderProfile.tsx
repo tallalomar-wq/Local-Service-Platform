@@ -347,11 +347,15 @@ const ProviderProfile: React.FC = () => {
               required
             >
               <option value="" disabled>Select a service...</option>
-              {services.map((service) => (
-                <option key={service.id} value={service.id}>
-                  {service.icon} {service.name}
-                </option>
-              ))}
+              {services.length === 0 ? (
+                <option value="" disabled>No services available</option>
+              ) : (
+                services.map((service) => (
+                  <option key={service.id} value={service.id}>
+                    {service.icon} {service.name}
+                  </option>
+                ))
+              )}
             </select>
           </div>
           {/* Hourly Rate */}
