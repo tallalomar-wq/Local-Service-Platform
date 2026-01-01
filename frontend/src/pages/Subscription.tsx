@@ -51,8 +51,7 @@ const Subscription: React.FC = () => {
     }
   };
 
-  // Commented out Stripe Checkout logic
-  /*
+  // Restore Stripe Checkout logic
   const handleSubscribe = async (planId: number) => {
     try {
       const token = localStorage.getItem('token');
@@ -96,32 +95,6 @@ const Subscription: React.FC = () => {
     } catch (error) {
       console.error('Error creating portal session:', error);
       alert('Failed to open billing portal. Please try again.');
-    }
-  };
-  */
-
-  // Direct plan change logic (upgrade/downgrade)
-  const handlePlanChange = async (planId: number) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-      // Call your backend endpoint to change the plan directly
-      const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL}/subscriptions/update`,
-        { planId },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      // Refresh current plan after change
-      fetchCurrentSubscription();
-      alert('Plan changed successfully!');
-    } catch (error) {
-      console.error('Error changing plan:', error);
-      alert('Failed to change plan. Please try again.');
     }
   };
 
@@ -201,8 +174,8 @@ const Subscription: React.FC = () => {
                 ))}
               </ul>
               <button
-                onClick={() => handlePlanChange(plan.id)}
-                disabled={currentPlan?.id === plan.id}
+                onClick={() => plan.price > 0 && handleSubscribe(plan.id)}
+                disabled={plan.price === 0 || currentPlan?.id === plan.id}
                 className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors ${
                   currentPlan?.id === plan.id
                     ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
@@ -213,7 +186,9 @@ const Subscription: React.FC = () => {
               >
                 {currentPlan?.id === plan.id
                   ? 'Current Plan'
-                  : 'Change Plan'}
+                  : plan.price === 0
+                  ? 'Contact Sales'
+                  : 'Subscribe Now'}
               </button>
             </div>
           </div>
