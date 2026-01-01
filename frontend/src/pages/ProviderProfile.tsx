@@ -124,6 +124,8 @@ const ProviderProfile: React.FC = () => {
       } else {
         setError('Failed to load provider profile. Please refresh the page.');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -185,7 +187,10 @@ const ProviderProfile: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="container mx-auto px-4 py-12 text-center">Loading...</div>;
+    // Only show loading if not in error state and not ready to show form
+    if (!error && !(!hasProfile && !isEditing)) {
+      return <div className="container mx-auto px-4 py-12 text-center">Loading...</div>;
+    }
   }
 
   return (
@@ -224,89 +229,74 @@ const ProviderProfile: React.FC = () => {
               <h3 className="text-gray-600 font-semibold mb-1">Business Name</h3>
               <p className="text-lg">{profileData.businessName}</p>
             </div>
-            
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">Service Category</h3>
               <p className="text-lg">{profileData.serviceCategory?.icon} {profileData.serviceCategory?.name}</p>
             </div>
-
             <div className="md:col-span-2">
               <h3 className="text-gray-600 font-semibold mb-1">Bio</h3>
               <p className="text-lg">{profileData.bio}</p>
             </div>
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">Hourly Rate</h3>
               <p className="text-lg">${profileData.hourlyRate}/hour</p>
             </div>
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">Experience</h3>
               <p className="text-lg">{profileData.yearsOfExperience} years</p>
             </div>
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">City</h3>
               <p className="text-lg">{profileData.city}</p>
             </div>
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">State</h3>
               <p className="text-lg">{profileData.state}</p>
             </div>
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">ZIP Code</h3>
               <p className="text-lg">{profileData.zipCode}</p>
             </div>
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">Available Hours</h3>
               <p className="text-lg">{profileData.availableHours || 'Not specified'}</p>
             </div>
-
             {profileData.address && (
               <div className="md:col-span-2">
                 <h3 className="text-gray-600 font-semibold mb-1">Address</h3>
                 <p className="text-lg">{profileData.address}</p>
               </div>
             )}
-
             {profileData.certifications && (
               <div className="md:col-span-2">
                 <h3 className="text-gray-600 font-semibold mb-1">Certifications</h3>
                 <p className="text-lg">{profileData.certifications}</p>
               </div>
             )}
-
             {profileData.insurance && (
               <div className="md:col-span-2">
                 <h3 className="text-gray-600 font-semibold mb-1">Insurance</h3>
                 <p className="text-lg">{profileData.insurance}</p>
               </div>
             )}
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">Rating</h3>
               <p className="text-lg">⭐ {profileData.rating || 'New'}</p>
             </div>
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">Total Reviews</h3>
               <p className="text-lg">{profileData.totalReviews || 0}</p>
             </div>
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">Completed Bookings</h3>
               <p className="text-lg">{profileData.completedBookings || 0}</p>
             </div>
-
             <div>
               <h3 className="text-gray-600 font-semibold mb-1">Subscription Plan</h3>
               <p className="text-lg">
                 {profileData.subscriptionPlan ? (
                   <span className="font-semibold text-blue-600">
-                    {profileData.subscriptionPlan.name} 
+                    {profileData.subscriptionPlan.name}
                     <span className="text-gray-600 font-normal"> - ${profileData.subscriptionPlan.price}/month</span>
                   </span>
                 ) : (
@@ -318,188 +308,10 @@ const ProviderProfile: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Mode */}
+      {/* Edit Mode: Always show form if no profile */}
       {(!hasProfile || isEditing) && (
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg max-w-3xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 font-semibold mb-2">Business Name *</label>
-              <input
-                type="text"
-                name="businessName"
-                value={formData.businessName}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                required
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 font-semibold mb-2">Bio / Description *</label>
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Tell customers about your business and expertise..."
-                required
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 font-semibold mb-2">Service Category *</label>
-              <select
-                name="serviceCategoryId"
-                value={formData.serviceCategoryId || ""}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                required
-              >
-                <option value="" disabled>Select a service...</option>
-                {services.map((service) => (
-                  <option key={service.id} value={service.id}>
-                    {service.icon} {service.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Hourly Rate ($) *</label>
-              <input
-                type="number"
-                name="hourlyRate"
-                value={formData.hourlyRate}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="50"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Years of Experience *</label>
-              <input
-                type="number"
-                name="yearsOfExperience"
-                value={formData.yearsOfExperience}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="5"
-                required
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 font-semibold mb-2">Address</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="123 Main St"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">City *</label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">State *</label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="MI"
-                maxLength={2}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">ZIP Code *</label>
-              <input
-                type="text"
-                name="zipCode"
-                value={formData.zipCode}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="48201"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-semibold mb-2">Available Hours</label>
-              <input
-                type="text"
-                name="availableHours"
-                value={formData.availableHours}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Mon-Fri 9am-5pm"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 font-semibold mb-2">Certifications</label>
-              <input
-                type="text"
-                name="certifications"
-                value={formData.certifications}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Licensed & Certified Professional"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-gray-700 font-semibold mb-2">Insurance</label>
-              <input
-                type="text"
-                name="insurance"
-                value={formData.insurance}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Fully insured and bonded"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="mt-8 w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 disabled:bg-gray-400"
-          >
-            {saving ? 'Saving...' : hasProfile ? 'Update Profile' : 'Create Profile'}
-          </button>
-
-          {hasProfile && isEditing && (
-            <button
-              type="button"
-              onClick={() => {
-                setIsEditing(false);
-                setError('');
-                setSuccess('');
-              }}
-              className="mt-4 w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600"
-            >
-              Cancel
-            </button>
-          )}
+          {/* ...existing code for form... */}
         </form>
       )}
 
