@@ -63,8 +63,9 @@ const ProviderProfile: React.FC = () => {
   const fetchProfile = async () => {
     try {
       const response = await api.get('/providers/me');
-      if (response.data && response.data.profile) {
-        const profile = response.data.profile;
+      if (response.data && (response.data.profile || response.data.provider)) {
+        // Support both 'profile' and 'provider' keys
+        const profile = response.data.profile || response.data.provider;
         setHasProfile(true);
         setProfileData(profile);
         setFormData({
@@ -100,11 +101,9 @@ const ProviderProfile: React.FC = () => {
           insurance: '',
           availableHours: '',
         });
-        setIsEditing(true);
       }
     } catch (err: any) {
-      // If 404, treat as no profile (show empty form)
-      if (err.response && err.response.status === 404) {
+      if (err.response && (err.response.status === 404 || err.response.status === 204)) {
         setHasProfile(false);
         setProfileData(null);
         setFormData({
@@ -121,10 +120,9 @@ const ProviderProfile: React.FC = () => {
           insurance: '',
           availableHours: '',
         });
-        setIsEditing(true);
+        setError('No provider profile found. Please create your profile.');
       } else {
-        console.error('Error fetching profile:', err);
-        setError('Failed to load provider profile.');
+        setError('Failed to load provider profile. Please refresh the page.');
       }
     }
   };
