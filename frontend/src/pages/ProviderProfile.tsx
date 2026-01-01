@@ -128,12 +128,61 @@ const ProviderProfile: React.FC = () => {
       }
     }
   };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const payload = {
+        ...formData,
+        serviceCategoryId: Number(formData.serviceCategoryId),
+        hourlyRate: Number(formData.hourlyRate),
+        yearsOfExperience: Number(formData.yearsOfExperience),
+      };
+
+      if (hasProfile) {
+        // Update profile
+        const response = await api.put('/providers/me', payload);
+        setProfileData(response.data.profile);
+        setSuccess('Profile updated successfully!');
+      } else {
+        // Create profile
+        const response = await api.post('/providers', payload);
+        setProfileData(response.data.profile);
+        setSuccess('Profile created successfully!');
+      }
+    } catch (err: any) {
       console.error('Save error:', err);
       console.error('Error response:', err.response);
       const errorMsg = err.response?.data?.message || err.message || 'Error saving profile';
       setError(`${errorMsg} (Status: ${err.response?.status || 'Unknown'})`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Add this function to handle Stripe portal redirect
+  const handleManageSubscription = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await api.post('/subscriptions/portal');
+      window.location.href = response.data.url;
+    } catch (err: any) {
+      setError('Failed to open subscription management.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -454,6 +503,19 @@ const ProviderProfile: React.FC = () => {
             </button>
           )}
         </form>
+      )}
+
+      {/* Manage Subscription Button */}
+      {hasProfile && (
+        <div className="mt-8">
+          <button
+            onClick={handleManageSubscription}
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            {loading ? 'Loading...' : 'Manage Subscription'}
+          </button>
+        </div>
       )}
     </div>
   );
