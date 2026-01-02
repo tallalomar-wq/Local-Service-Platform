@@ -29,14 +29,33 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    
-    if (storedToken && storedUser) {
+    if (storedToken) {
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        setLoading(false);
+      } else {
+        // Try to restore session from backend
+        api.get('/auth/me')
+          .then(res => {
+            setUser(res.data.user);
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+          })
+          .catch(() => {
+            setToken(null);
+            setUser(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          })
+          .finally(() => setLoading(false));
+      }
+    } else {
+      setLoading(false);
     }
   }, []);
 
@@ -83,7 +102,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isProvider: user?.role === 'provider',
     isCustomer: user?.role === 'customer',
     isAdmin: user?.role === 'admin',
+    loading,
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
