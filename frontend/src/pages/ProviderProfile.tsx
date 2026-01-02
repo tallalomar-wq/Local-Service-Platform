@@ -309,7 +309,7 @@ const ProviderProfile: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Mode: Always show form if no profile, even if there is an error */}
+      {/* Edit Mode: Show form only if editing or no profile */}
       {(!hasProfile || isEditing) && (
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg max-w-3xl mt-6">
           {/* Business Name */}
