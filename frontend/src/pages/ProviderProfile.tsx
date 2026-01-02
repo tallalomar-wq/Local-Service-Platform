@@ -1,12 +1,45 @@
 import React, { useState, useEffect } from 'react';
-import api from '../api';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { useProfile } from '../context/ProfileContext';
-import { ServiceCategory } from '../types';
+
+interface ServiceCategory {
+  id: number;
+  name: string;
+  icon: string;
+}
+
+interface SubscriptionPlan {
+  id: number;
+  name: string;
+  price: number;
+}
+
+interface ProviderProfile {
+  id: number;
+  businessName: string;
+  bio: string;
+  serviceCategoryId: number;
+  hourlyRate: number;
+  yearsOfExperience: number;
+  address?: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  availableHours?: string;
+  certifications?: string;
+  insurance?: string;
+  rating?: number;
+  totalReviews?: number;
+  completedBookings?: number;
+  subscriptionStatus: string;
+  serviceCategory?: ServiceCategory;
+  subscriptionPlan?: SubscriptionPlan;
+}
 
 const ProviderProfile: React.FC = () => {
   const { user } = useAuth();
-  const { profileData, setProfileData, loading, setLoading } = useProfile();
+  const [profileData, setProfileData] = useState<ProviderProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<any>({
     businessName: '',
     bio: '',
@@ -21,6 +54,7 @@ const ProviderProfile: React.FC = () => {
     certifications: '',
     insurance: '',
   });
+  const [services, setServices] = useState<ServiceCategory[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
@@ -28,7 +62,102 @@ const ProviderProfile: React.FC = () => {
 
   const hasProfile = !!profileData;
 
-  // Move the loading check to the very top of the component
+  // Fetch provider profile and services
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch services
+        const servicesRes = await api.get('/services');
+        setServices(servicesRes.data.services || []);
+
+        // Fetch provider profile
+        try {
+          const profileRes = await api.get('/providers/me');
+          const profile = profileRes.data.provider;
+          setProfileData(profile);
+          setFormData({
+            businessName: profile.businessName || '',
+            bio: profile.bio || '',
+            serviceCategoryId: profile.serviceCategoryId || '',
+            hourlyRate: profile.hourlyRate || '',
+            yearsOfExperience: profile.yearsOfExperience || '',
+            address: profile.address || '',
+            city: profile.city || '',
+            state: profile.state || '',
+            zipCode: profile.zipCode || '',
+            availableHours: profile.availableHours || '',
+            certifications: profile.certifications || '',
+            insurance: profile.insurance || '',
+          });
+        } catch (err: any) {
+          if (err.response?.status !== 404) {
+            console.error('Error fetching profile:', err);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setSaving(true);
+
+    try {
+      let response;
+      if (hasProfile) {
+        // Update existing profile
+        response = await api.put('/providers/me', formData);
+        setSuccess('Profile updated successfully!');
+      } else {
+        // Create new profile
+        response = await api.post('/providers', formData);
+        setSuccess('Profile created successfully!');
+      }
+
+      // Update profile data with response
+      const updatedProfile = response.data.provider;
+      setProfileData(updatedProfile);
+      setIsEditing(false);
+
+      // Refresh profile to get full data with relations
+      const profileRes = await api.get('/providers/me');
+      setProfileData(profileRes.data.provider);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to save profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      setLoading(true);
+      const response = await api.post('/subscriptions/portal-session');
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to open subscription management');
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -204,7 +333,7 @@ const ProviderProfile: React.FC = () => {
                     {service.icon} {service.name}
                   </option>
                 ))
-              }
+              )}
             </select>
           </div>
           {/* Hourly Rate */}
