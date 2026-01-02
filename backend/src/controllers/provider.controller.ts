@@ -196,6 +196,11 @@ export const getMyProviderProfile = async (req: AuthRequest, res: Response): Pro
           model: ServiceCategory,
           as: 'serviceCategory',
         },
+        {
+          model: SubscriptionPlan,
+          as: 'subscriptionPlan',
+          attributes: ['id', 'name', 'price', 'interval', 'features', 'commissionRate'],
+        },
       ],
     });
 
