@@ -226,7 +226,7 @@ const ProviderProfile: React.FC = () => {
         </div>
       )}
 
-      {/* View Mode */}
+      {/* View Mode: Always show updated info after update */}
       {hasProfile && !isEditing && profileData && (
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-3xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
