@@ -156,6 +156,7 @@ const ProviderProfile: React.FC = () => {
         const response = await api.put('/providers', payload);
         setProfileData(response.data.profile);
         setSuccess('Profile updated successfully!');
+        setIsEditing(false); // Switch to view mode after update
       } else {
         // Create profile
         const response = await api.post('/providers', payload);
