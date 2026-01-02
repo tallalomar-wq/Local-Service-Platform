@@ -202,7 +202,11 @@ const ProviderProfile: React.FC = () => {
         </h1>
         {hasProfile && !isEditing && (
           <button
-            onClick={() => setIsEditing(true)}
+            onClick={() => {
+              setIsEditing(true);
+              setError('');
+              setSuccess('');
+            }}
             className="bg-primary-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-700"
           >
             Edit Profile
