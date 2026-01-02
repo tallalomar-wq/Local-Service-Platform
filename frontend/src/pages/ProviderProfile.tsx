@@ -196,12 +196,7 @@
     }
   };
 
-  if (loading) {
-    // Only show loading if not in error state and not ready to show form
-    if (!error && !(!hasProfile && !isEditing)) {
-      return <div className="container mx-auto px-4 py-12 text-center">Loading...</div>;
-    }
-  }
+  // Remove duplicate loading fallback. Only use the top-level spinner.
 
   return (
     <div className="container mx-auto px-4 py-12">
