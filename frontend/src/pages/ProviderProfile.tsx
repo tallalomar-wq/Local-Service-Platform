@@ -1,3 +1,34 @@
+import React, { useState, useEffect } from 'react';
+import api from '../api';
+import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
+import { ServiceCategory } from '../types';
+
+const ProviderProfile: React.FC = () => {
+  const { user } = useAuth();
+  const { profileData, setProfileData, loading, setLoading } = useProfile();
+  const [formData, setFormData] = useState<any>({
+    businessName: '',
+    bio: '',
+    serviceCategoryId: '',
+    hourlyRate: '',
+    yearsOfExperience: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    availableHours: '',
+    certifications: '',
+    insurance: '',
+  });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const hasProfile = !!profileData;
+
+  // Move the loading check to the very top of the component
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -6,197 +37,6 @@
       </div>
     );
   }
-
-  return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50">
-      <div className="w-full max-w-3xl mt-10 mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
-        <h1 className="text-3xl font-bold">
-          {hasProfile ? 'Provider Profile' : 'Create Provider Profile'}
-        </h1>
-        {hasProfile && !isEditing && (
-          <button
-            onClick={() => {
-              setIsEditing(true);
-              setError('');
-              setSuccess('');
-            }}
-            className="bg-primary-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-700"
-          >
-            Edit Profile
-          </button>
-        )}
-      </div>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-          {success}
-        </div>
-      )}
-
-      {/* View Mode: Always show updated info after update */}
-      {hasProfile && !isEditing && profileData && (
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-3xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* ...existing code for view mode... */}
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Business Name</h3>
-              <p className="text-lg">{profileData.businessName}</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Service Category</h3>
-              <p className="text-lg">{profileData.serviceCategory?.icon} {profileData.serviceCategory?.name}</p>
-            </div>
-            <div className="md:col-span-2">
-              <h3 className="text-gray-600 font-semibold mb-1">Bio</h3>
-              <p className="text-lg">{profileData.bio}</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Hourly Rate</h3>
-              <p className="text-lg">${profileData.hourlyRate}/hour</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Experience</h3>
-              <p className="text-lg">{profileData.yearsOfExperience} years</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">City</h3>
-              <p className="text-lg">{profileData.city}</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">State</h3>
-              <p className="text-lg">{profileData.state}</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">ZIP Code</h3>
-              <p className="text-lg">{profileData.zipCode}</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Available Hours</h3>
-              <p className="text-lg">{profileData.availableHours || 'Not specified'}</p>
-            </div>
-            {profileData.address && (
-              <div className="md:col-span-2">
-                <h3 className="text-gray-600 font-semibold mb-1">Address</h3>
-                <p className="text-lg">{profileData.address}</p>
-              </div>
-            )}
-            {profileData.certifications && (
-              <div className="md:col-span-2">
-                <h3 className="text-gray-600 font-semibold mb-1">Certifications</h3>
-                <p className="text-lg">{profileData.certifications}</p>
-              </div>
-            )}
-            {profileData.insurance && (
-              <div className="md:col-span-2">
-                <h3 className="text-gray-600 font-semibold mb-1">Insurance</h3>
-                <p className="text-lg">{profileData.insurance}</p>
-              </div>
-            )}
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Rating</h3>
-              <p className="text-lg">⭐ {profileData.rating || 'New'}</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Total Reviews</h3>
-              <p className="text-lg">{profileData.totalReviews || 0}</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Completed Bookings</h3>
-              <p className="text-lg">{profileData.completedBookings || 0}</p>
-            </div>
-            <div>
-              <h3 className="text-gray-600 font-semibold mb-1">Subscription Plan</h3>
-              <p className="text-lg">
-                {profileData.subscriptionPlan ? (
-                  <span className="font-semibold text-blue-600">
-                    {profileData.subscriptionPlan.name}
-                    <span className="text-gray-600 font-normal"> - ${profileData.subscriptionPlan.price}/month</span>
-                  </span>
-                ) : (
-                  <span className="capitalize">{profileData.subscriptionStatus}</span>
-                )}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Mode: Show form only if editing or no profile */}
-      {(!hasProfile || isEditing) && (
-        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg max-w-3xl mt-6">
-          {/* Business Name */}
-          <div className="md:col-span-2 mb-4">
-            <label className="block text-gray-700 font-semibold mb-2">Business Name *</label>
-            <input
-              type="text"
-              name="businessName"
-              value={formData.businessName}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              required
-            />
-          </div>
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const payload = {
-        ...formData,
-        serviceCategoryId: Number(formData.serviceCategoryId),
-        hourlyRate: Number(formData.hourlyRate),
-        yearsOfExperience: Number(formData.yearsOfExperience),
-      };
-
-      if (hasProfile) {
-        // Update profile
-        const response = await api.put('/providers', payload);
-        setProfileData(response.data.profile);
-        setSuccess('Profile updated successfully!');
-        setIsEditing(false); // Switch to view mode after update
-      } else {
-        // Create profile
-        const response = await api.post('/providers', payload);
-        setProfileData(response.data.profile);
-        setSuccess('Profile created successfully!');
-      }
-    } catch (err: any) {
-      console.error('Save error:', err);
-      console.error('Error response:', err.response);
-      const errorMsg = err.response?.data?.message || err.message || 'Error saving profile';
-      setError(`${errorMsg} (Status: ${err.response?.status || 'Unknown'})`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Add this function to handle Stripe portal redirect
-  const handleManageSubscription = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await api.post('/subscriptions/portal');
-      window.location.href = response.data.url;
-    } catch (err: any) {
-      setError('Failed to open subscription management.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Remove duplicate loading fallback. Only use the top-level spinner.
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -364,7 +204,7 @@
                     {service.icon} {service.name}
                   </option>
                 ))
-              )}
+              }
             </select>
           </div>
           {/* Hourly Rate */}
