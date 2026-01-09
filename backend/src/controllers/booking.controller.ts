@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Booking, ProviderProfile, User, ServiceCategory } from '../models';
+import { Booking, ProviderProfile, User, ServiceCategory, PaymentAdjustment } from '../models';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { Op } from 'sequelize';
 
@@ -201,3 +201,154 @@ export const getBookingById = async (req: AuthRequest, res: Response): Promise<v
     res.status(500).json({ message: 'Error fetching booking' });
   }
 };
+
+// Request additional payment (Provider only)
+export const requestAdditionalPayment = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { bookingId } = req.params;
+    const { amount, reason, description } = req.body;
+
+    // Verify provider owns this booking
+    const booking = await Booking.findByPk(bookingId);
+    if (!booking) {
+      res.status(404).json({ message: 'Booking not found' });
+      return;
+    }
+
+    const provider = await ProviderProfile.findOne({ where: { userId: req.user.id } });
+    if (!provider || booking.providerId !== provider.id) {
+      res.status(403).json({ message: 'Not authorized' });
+      return;
+    }
+
+    // Check if booking can have adjustments
+    if (!['accepted', 'confirmed', 'in-progress'].includes(booking.status)) {
+      res.status(400).json({ message: 'Cannot request payment for this booking status' });
+      return;
+    }
+
+    // Create payment adjustment request
+    const adjustment = await PaymentAdjustment.create({
+      bookingId: parseInt(bookingId),
+      requestedBy: req.user.id,
+      amount,
+      reason,
+      description,
+      status: 'pending',
+    });
+
+    res.status(201).json({
+      message: 'Payment request sent to customer',
+      adjustment,
+    });
+  } catch (error) {
+    console.error('Request payment error:', error);
+    res.status(500).json({ message: 'Error requesting additional payment' });
+  }
+};
+
+// Respond to payment adjustment (Customer only)
+export const respondToPaymentRequest = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { adjustmentId } = req.params;
+    const { action } = req.body; // 'approve' or 'reject'
+
+    const adjustment = await PaymentAdjustment.findByPk(adjustmentId, {
+      include: [{
+        model: Booking,
+        as: 'booking',
+      }],
+    });
+
+    if (!adjustment) {
+      res.status(404).json({ message: 'Payment request not found' });
+      return;
+    }
+
+    const booking = (adjustment as any).booking;
+    if (booking.customerId !== req.user.id) {
+      res.status(403).json({ message: 'Not authorized' });
+      return;
+    }
+
+    if (adjustment.status !== 'pending') {
+      res.status(400).json({ message: 'This request has already been processed' });
+      return;
+    }
+
+    if (action === 'approve') {
+      // Update adjustment status
+      await adjustment.update({
+        status: 'approved',
+        respondedAt: new Date(),
+      });
+
+      // Update booking with new amount
+      const newTotal = (booking.estimatedCost || 0) + adjustment.amount;
+      await booking.update({
+        estimatedCost: newTotal,
+        commission: newTotal * 0.08, // 8% commission
+      });
+
+      res.json({
+        message: 'Payment request approved. Please proceed with payment.',
+        adjustment,
+        newTotal,
+      });
+    } else if (action === 'reject') {
+      await adjustment.update({
+        status: 'rejected',
+        respondedAt: new Date(),
+      });
+
+      res.json({
+        message: 'Payment request rejected',
+        adjustment,
+      });
+    } else {
+      res.status(400).json({ message: 'Invalid action. Use "approve" or "reject"' });
+    }
+  } catch (error) {
+    console.error('Respond to payment error:', error);
+    res.status(500).json({ message: 'Error processing payment request' });
+  }
+};
+
+// Get payment adjustments for a booking
+export const getPaymentAdjustments = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await Booking.findByPk(bookingId);
+    if (!booking) {
+      res.status(404).json({ message: 'Booking not found' });
+      return;
+    }
+
+    // Verify user is either customer or provider of this booking
+    const provider = await ProviderProfile.findOne({ where: { userId: req.user.id } });
+    const isCustomer = booking.customerId === req.user.id;
+    const isProvider = provider && booking.providerId === provider.id;
+
+    if (!isCustomer && !isProvider) {
+      res.status(403).json({ message: 'Not authorized' });
+      return;
+    }
+
+    const adjustments = await PaymentAdjustment.findAll({
+      where: { bookingId },
+      include: [{
+        model: User,
+        as: 'requester',
+        attributes: ['firstName', 'lastName'],
+      }],
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json({ adjustments });
+  } catch (error) {
+    console.error('Get adjustments error:', error);
+    res.status(500).json({ message: 'Error fetching payment adjustments' });
+  }
+};
+

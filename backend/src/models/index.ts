@@ -4,6 +4,7 @@ import { ProviderProfile } from './ProviderProfile.model';
 import { Booking } from './Booking.model';
 import { Review } from './Review.model';
 import SubscriptionPlan from './SubscriptionPlan.model';
+import PaymentAdjustment from './PaymentAdjustment.model';
 
 // User to ProviderProfile (1:1)
 User.hasOne(ProviderProfile, {
@@ -95,4 +96,24 @@ Review.belongsTo(ProviderProfile, {
   as: 'provider',
 });
 
-export { User, ServiceCategory, ProviderProfile, Booking, Review, SubscriptionPlan };
+// Booking to PaymentAdjustment (1:Many)
+Booking.hasMany(PaymentAdjustment, {
+  foreignKey: 'bookingId',
+  as: 'paymentAdjustments',
+});
+PaymentAdjustment.belongsTo(Booking, {
+  foreignKey: 'bookingId',
+  as: 'booking',
+});
+
+// User to PaymentAdjustment (1:Many)
+User.hasMany(PaymentAdjustment, {
+  foreignKey: 'requestedBy',
+  as: 'paymentRequests',
+});
+PaymentAdjustment.belongsTo(User, {
+  foreignKey: 'requestedBy',
+  as: 'requester',
+});
+
+export { User, ServiceCategory, ProviderProfile, Booking, Review, SubscriptionPlan, PaymentAdjustment };

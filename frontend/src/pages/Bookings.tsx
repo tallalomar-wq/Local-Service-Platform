@@ -14,6 +14,9 @@ const Bookings: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [showReviewForm, setShowReviewForm] = useState<number | null>(null);
   const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+  const [showPaymentRequestForm, setShowPaymentRequestForm] = useState<number | null>(null);
+  const [paymentRequestData, setPaymentRequestData] = useState({ amount: '', reason: '', description: '' });
+  const [paymentRequests, setPaymentRequests] = useState<{[key: number]: any[]}>({});
 
   // Get provider info from navigation state
   const providerId = location.state?.providerId;
@@ -49,6 +52,18 @@ const Bookings: React.FC = () => {
     try {
       const response = await api.get('/bookings');
       setBookings(response.data.bookings || []);
+      
+      // Fetch payment adjustments for each booking
+      const requestsMap: {[key: number]: any[]} = {};
+      for (const booking of response.data.bookings || []) {
+        try {
+          const adjResponse = await api.get(`/bookings/${booking.id}/adjustments`);
+          requestsMap[booking.id] = adjResponse.data.adjustments || [];
+        } catch (err) {
+          requestsMap[booking.id] = [];
+        }
+      }
+      setPaymentRequests(requestsMap);
     } catch (err) {
       console.error('Error fetching bookings:', err);
     } finally {
@@ -95,6 +110,49 @@ const Bookings: React.FC = () => {
       fetchBookings();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to submit review');
+    }
+  };
+
+  const handlePaymentRequest = async (bookingId: number) => {
+    setError('');
+    setSuccess('');
+
+    const amount = parseFloat(paymentRequestData.amount);
+    if (!amount || amount <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
+
+    if (!paymentRequestData.reason) {
+      setError('Please provide a reason for the additional charge');
+      return;
+    }
+
+    try {
+      await api.post(`/bookings/${bookingId}/request-payment`, {
+        amount,
+        reason: paymentRequestData.reason,
+        description: paymentRequestData.description,
+      });
+      setSuccess('Payment request sent to customer!');
+      setShowPaymentRequestForm(null);
+      setPaymentRequestData({ amount: '', reason: '', description: '' });
+      fetchBookings();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to send payment request');
+    }
+  };
+
+  const handlePaymentResponse = async (adjustmentId: number, action: 'approve' | 'reject') => {
+    setError('');
+    setSuccess('');
+
+    try {
+      await api.put(`/bookings/adjustments/${adjustmentId}/respond`, { action });
+      setSuccess(action === 'approve' ? 'Payment approved!' : 'Payment request rejected');
+      fetchBookings();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to respond to payment request');
     }
   };
 
@@ -426,6 +484,119 @@ const Bookings: React.FC = () => {
                       >
                         ✓ Mark as Completed
                       </button>
+                    </div>
+                  )}
+
+                  {/* Provider Action - Request Additional Payment */}
+                  {user?.role === 'provider' && ['confirmed', 'in-progress'].includes(booking.status) && (
+                    <div className="mt-4 pt-4 border-t">
+                      {showPaymentRequestForm === booking.id ? (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h4 className="font-semibold mb-3">Request Additional Payment</h4>
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium mb-2">Amount ($)</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={paymentRequestData.amount}
+                              onChange={(e) => setPaymentRequestData({ ...paymentRequestData, amount: e.target.value })}
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                              placeholder="100.00"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium mb-2">Reason</label>
+                            <select
+                              value={paymentRequestData.reason}
+                              onChange={(e) => setPaymentRequestData({ ...paymentRequestData, reason: e.target.value })}
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            >
+                              <option value="">Select reason...</option>
+                              <option value="extra_time">Extra Time/Hours</option>
+                              <option value="materials">Materials</option>
+                              <option value="scope_increase">Scope Increase</option>
+                              <option value="other">Other</option>
+                            </select>
+                          </div>
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium mb-2">Description (Optional)</label>
+                            <textarea
+                              value={paymentRequestData.description}
+                              onChange={(e) => setPaymentRequestData({ ...paymentRequestData, description: e.target.value })}
+                              rows={2}
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                              placeholder="Explain the additional charge..."
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handlePaymentRequest(booking.id)}
+                              className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 font-semibold"
+                            >
+                              Send Request
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowPaymentRequestForm(null);
+                                setPaymentRequestData({ amount: '', reason: '', description: '' });
+                              }}
+                              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setShowPaymentRequestForm(booking.id)}
+                          className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition font-semibold"
+                        >
+                          💰 Request Additional Payment
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Show Payment Requests */}
+                  {paymentRequests[booking.id] && paymentRequests[booking.id].length > 0 && (
+                    <div className="mt-4 pt-4 border-t">
+                      <h4 className="font-semibold mb-3">Payment Requests</h4>
+                      {paymentRequests[booking.id].map((request) => (
+                        <div key={request.id} className="bg-gray-50 p-4 rounded-lg mb-3">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <p className="font-semibold text-lg text-green-600">${request.amount}</p>
+                              <p className="text-sm text-gray-600 capitalize">{request.reason.replace('_', ' ')}</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              request.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                            </span>
+                          </div>
+                          {request.description && (
+                            <p className="text-sm text-gray-700 mb-2">{request.description}</p>
+                          )}
+                          {user?.role === 'customer' && request.status === 'pending' && (
+                            <div className="flex gap-2 mt-3">
+                              <button
+                                onClick={() => handlePaymentResponse(request.id, 'approve')}
+                                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 font-semibold"
+                              >
+                                ✓ Approve
+                              </button>
+                              <button
+                                onClick={() => handlePaymentResponse(request.id, 'reject')}
+                                className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 font-semibold"
+                              >
+                                ✕ Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
 
