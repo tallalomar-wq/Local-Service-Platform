@@ -12,11 +12,11 @@ CREATE TABLE IF NOT EXISTS payment_adjustments (
   "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create index for faster lookups
+-- Create index for faster lookups (only if they don't exist)
 CREATE INDEX IF NOT EXISTS idx_payment_adjustments_booking ON payment_adjustments("bookingId");
 CREATE INDEX IF NOT EXISTS idx_payment_adjustments_status ON payment_adjustments(status);
 
--- Add trigger to update updatedAt
+-- Create function if it doesn't exist
 CREATE OR REPLACE FUNCTION update_payment_adjustments_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -25,6 +25,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop trigger if exists, then create it
+DROP TRIGGER IF EXISTS payment_adjustments_updated_at_trigger ON payment_adjustments;
 CREATE TRIGGER payment_adjustments_updated_at_trigger
 BEFORE UPDATE ON payment_adjustments
 FOR EACH ROW
