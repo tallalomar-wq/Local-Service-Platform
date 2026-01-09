@@ -53,13 +53,14 @@ const Bookings: React.FC = () => {
       const response = await api.get('/bookings');
       setBookings(response.data.bookings || []);
       
-      // Fetch payment adjustments for each booking
+      // Fetch payment adjustments for each booking (optional, fail silently)
       const requestsMap: {[key: number]: any[]} = {};
       for (const booking of response.data.bookings || []) {
         try {
           const adjResponse = await api.get(`/bookings/${booking.id}/adjustments`);
           requestsMap[booking.id] = adjResponse.data.adjustments || [];
         } catch (err) {
+          // Silently fail if adjustments endpoint doesn't exist or table not created yet
           requestsMap[booking.id] = [];
         }
       }
