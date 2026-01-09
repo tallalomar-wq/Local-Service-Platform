@@ -45,8 +45,25 @@ export class SubscriptionController {
         return res.status(404).json({ message: 'Subscription plan not found' });
       }
 
-      if (!plan.stripePriceId) {
-        return res.status(400).json({ message: 'This plan cannot be purchased online' });
+      // Handle free plans (no Stripe checkout needed)
+      if (!plan.stripePriceId || plan.stripePriceId === '' || plan.price === 0) {
+        // Activate free plan directly
+        const subscriptionStartDate = new Date();
+        const subscriptionEndDate = new Date();
+        subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 14); // 14 days trial
+
+        await providerProfile.update({
+          subscriptionPlanId: plan.id,
+          subscriptionStatus: 'active',
+          subscriptionStartDate,
+          subscriptionEndDate,
+        });
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        return res.json({ 
+          message: 'Free plan activated successfully',
+          url: `${frontendUrl}/subscription/success?free=true`
+        });
       }
 
       // Create or get Stripe customer
