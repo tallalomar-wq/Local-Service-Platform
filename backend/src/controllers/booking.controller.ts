@@ -227,20 +227,31 @@ export const requestAdditionalPayment = async (req: AuthRequest, res: Response):
       return;
     }
 
-    // Create payment adjustment request
-    const adjustment = await PaymentAdjustment.create({
-      bookingId: parseInt(bookingId),
-      requestedBy: req.user.id,
-      amount,
-      reason,
-      description,
-      status: 'pending',
-    });
+    try {
+      // Create payment adjustment request
+      const adjustment = await PaymentAdjustment.create({
+        bookingId: parseInt(bookingId),
+        requestedBy: req.user.id,
+        amount,
+        reason,
+        description,
+        status: 'pending',
+      });
 
-    res.status(201).json({
-      message: 'Payment request sent to customer',
-      adjustment,
-    });
+      res.status(201).json({
+        message: 'Payment request sent to customer',
+        adjustment,
+      });
+    } catch (dbError: any) {
+      // If table doesn't exist, inform user
+      if (dbError.message && dbError.message.includes('does not exist')) {
+        res.status(503).json({ 
+          message: 'Payment adjustment feature is being set up. Please try again in a few moments.' 
+        });
+      } else {
+        throw dbError;
+      }
+    }
   } catch (error) {
     console.error('Request payment error:', error);
     res.status(500).json({ message: 'Error requesting additional payment' });
@@ -335,17 +346,26 @@ export const getPaymentAdjustments = async (req: AuthRequest, res: Response): Pr
       return;
     }
 
-    const adjustments = await PaymentAdjustment.findAll({
-      where: { bookingId },
-      include: [{
-        model: User,
-        as: 'requester',
-        attributes: ['firstName', 'lastName'],
-      }],
-      order: [['createdAt', 'DESC']],
-    });
+    try {
+      const adjustments = await PaymentAdjustment.findAll({
+        where: { bookingId },
+        include: [{
+          model: User,
+          as: 'requester',
+          attributes: ['firstName', 'lastName'],
+        }],
+        order: [['createdAt', 'DESC']],
+      });
 
-    res.json({ adjustments });
+      res.json({ adjustments });
+    } catch (dbError: any) {
+      // If table doesn't exist yet, return empty array
+      if (dbError.message && dbError.message.includes('does not exist')) {
+        res.json({ adjustments: [] });
+      } else {
+        throw dbError;
+      }
+    }
   } catch (error) {
     console.error('Get adjustments error:', error);
     res.status(500).json({ message: 'Error fetching payment adjustments' });
