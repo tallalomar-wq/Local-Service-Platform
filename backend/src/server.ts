@@ -11,6 +11,7 @@ import serviceRoutes from './routes/service.routes';
 import reviewRoutes from './routes/review.routes';
 import seedRoutes from './routes/seed.routes';
 import subscriptionRoutes from './routes/subscription.routes';
+import notificationRoutes from './routes/notification.routes';
 import { errorHandler } from './middleware/error.middleware';
 import { User } from './models';
 
@@ -45,6 +46,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/seed', seedRoutes);
 
 console.log('All API routes registered successfully');

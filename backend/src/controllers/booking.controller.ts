@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Booking, ProviderProfile, User, ServiceCategory, PaymentAdjustment } from '../models';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { Op } from 'sequelize';
+import { NotificationController } from './notification.controller';
 
 export const createBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -44,6 +45,16 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
       status: 'pending',
       paymentStatus: 'pending',
     });
+
+    // Send notification to provider
+    await NotificationController.createNotification(
+      providerId,
+      'booking',
+      'New Booking Request',
+      `You have a new booking request for ${serviceDate} at ${serviceTime}`,
+      booking.id,
+      'booking'
+    );
 
     res.status(201).json({
       message: 'Booking created successfully',
@@ -149,6 +160,37 @@ export const updateBookingStatus = async (req: AuthRequest, res: Response): Prom
         by: 1,
         where: { id: booking.providerId },
       });
+      
+      // Notify customer that booking is completed
+      await NotificationController.createNotification(
+        booking.customerId,
+        'booking',
+        'Booking Completed',
+        'Your booking has been completed. Please leave a review!',
+        booking.id,
+        'booking'
+      );
+    } else if (status === 'accepted') {
+      // Notify customer that booking was accepted
+      await NotificationController.createNotification(
+        booking.customerId,
+        'booking',
+        'Booking Accepted',
+        'Your booking request has been accepted by the provider',
+        booking.id,
+        'booking'
+      );
+    } else if (status === 'cancelled') {
+      // Notify both parties about cancellation
+      const notifyUserId = req.user.role === 'provider' ? booking.customerId : booking.providerId;
+      await NotificationController.createNotification(
+        notifyUserId,
+        'booking',
+        'Booking Cancelled',
+        `A booking has been cancelled${cancellationReason ? ': ' + cancellationReason : ''}`,
+        booking.id,
+        'booking'
+      );
     }
 
     res.json({
@@ -238,6 +280,16 @@ export const requestAdditionalPayment = async (req: AuthRequest, res: Response):
         status: 'pending',
       });
 
+      // Notify customer about payment request
+      await NotificationController.createNotification(
+        booking.customerId,
+        'payment',
+        'Additional Payment Requested',
+        `Provider requested $${amount} additional payment: ${reason}`,
+        booking.id,
+        'payment-adjustment'
+      );
+
       res.status(201).json({
         message: 'Payment request sent to customer',
         adjustment,
@@ -301,6 +353,16 @@ export const respondToPaymentRequest = async (req: AuthRequest, res: Response): 
         commission: newTotal * 0.08, // 8% commission
       });
 
+      // Notify provider about approval
+      await NotificationController.createNotification(
+        adjustment.requestedBy,
+        'payment',
+        'Payment Request Approved',
+        `Customer approved your $${adjustment.amount} payment request`,
+        booking.id,
+        'payment-adjustment'
+      );
+
       res.json({
         message: 'Payment request approved. Please proceed with payment.',
         adjustment,
@@ -311,6 +373,16 @@ export const respondToPaymentRequest = async (req: AuthRequest, res: Response): 
         status: 'rejected',
         respondedAt: new Date(),
       });
+
+      // Notify provider about rejection
+      await NotificationController.createNotification(
+        adjustment.requestedBy,
+        'payment',
+        'Payment Request Rejected',
+        `Customer rejected your $${adjustment.amount} payment request`,
+        booking.id,
+        'payment-adjustment'
+      );
 
       res.json({
         message: 'Payment request rejected',

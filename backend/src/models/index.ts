@@ -5,6 +5,7 @@ import { Booking } from './Booking.model';
 import { Review } from './Review.model';
 import SubscriptionPlan from './SubscriptionPlan.model';
 import PaymentAdjustment from './PaymentAdjustment.model';
+import Notification from './Notification.model';
 
 // User to ProviderProfile (1:1)
 User.hasOne(ProviderProfile, {
@@ -116,4 +117,14 @@ PaymentAdjustment.belongsTo(User, {
   as: 'requester',
 });
 
-export { User, ServiceCategory, ProviderProfile, Booking, Review, SubscriptionPlan, PaymentAdjustment };
+// User to Notification (1:Many)
+User.hasMany(Notification, {
+  foreignKey: 'userId',
+  as: 'notifications',
+});
+Notification.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user',
+});
+
+export { User, ServiceCategory, ProviderProfile, Booking, Review, SubscriptionPlan, PaymentAdjustment, Notification };

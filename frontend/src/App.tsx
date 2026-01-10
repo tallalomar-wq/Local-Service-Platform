@@ -16,6 +16,7 @@ import VerifyPhone from './pages/VerifyPhone';
 import Subscription from './pages/Subscription';
 import SubscriptionSuccess from './pages/SubscriptionSuccess';
 import SubscriptionCancel from './pages/SubscriptionCancel';
+import Notifications from './pages/Notifications';
 
 const PrivateRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -56,6 +57,14 @@ function AppRoutes() {
             element={
               <PrivateRoute>
                 <ProviderProfile />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <PrivateRoute>
+                <Notifications />
               </PrivateRoute>
             }
           />

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Review, Booking, User, ProviderProfile } from '../models';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { sequelize } from '../config/database';
+import { NotificationController } from './notification.controller';
 
 export const createReview = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -50,6 +51,16 @@ export const createReview = async (req: AuthRequest, res: Response): Promise<voi
         totalReviews: reviews.length,
       });
     }
+
+    // Notify provider about new review
+    await NotificationController.createNotification(
+      booking.providerId,
+      'review',
+      'New Review Received',
+      `You received a ${rating}-star review from a customer`,
+      review.id,
+      'review'
+    );
 
     res.status(201).json({
       message: 'Review created successfully',
