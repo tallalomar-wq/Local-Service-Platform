@@ -36,8 +36,7 @@ interface ProviderProfile {
   subscriptionPlan?: SubscriptionPlan;
 }
 
-const ProviderProfile: React.FC = () => {
-  const { user } = useAuth();
+const ProviderProfilePage: React.FC = () => {
   const [profileData, setProfileData] = useState<ProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<any>({
@@ -490,4 +489,4 @@ const ProviderProfile: React.FC = () => {
   );
 };
 
-export default ProviderProfile;
+export default ProviderProfilePage;

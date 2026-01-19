@@ -14,18 +14,10 @@ interface Notification {
 }
 
 const Notifications: React.FC = () => {
-  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-
-  useEffect(() => {
-    fetchNotifications();
-    // Auto-refresh every 15 seconds when on notifications page
-    const interval = setInterval(fetchNotifications, 15000);
-    return () => clearInterval(interval);
-  }, [filter]);
 
   const fetchNotifications = async () => {
     try {
@@ -39,6 +31,14 @@ const Notifications: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchNotifications();
+    // Auto-refresh every 15 seconds when on notifications page
+    const interval = setInterval(fetchNotifications, 15000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
 
   const markAsRead = async (id: number) => {
     try {
