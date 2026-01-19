@@ -172,3 +172,100 @@ export const sendPasswordResetEmail = async (
     throw new Error('Failed to send password reset email');
   }
 };
+
+export const sendBookingNotificationEmail = async (
+  to: string,
+  firstName: string,
+  subject: string,
+  message: string,
+  bookingDetails: {
+    serviceDate: string;
+    serviceTime: string;
+    serviceName: string;
+    address: string;
+  }
+): Promise<void> => {
+  // In development mode without email credentials, just log
+  if (process.env.EMAIL_SERVICE === 'development' && !process.env.EMAIL_USER) {
+    console.log('\n📧 BOOKING EMAIL NOTIFICATION (DEV MODE)');
+    console.log(`Email: ${to}`);
+    console.log(`Subject: ${subject}`);
+    console.log(`Message: ${message}`);
+    console.log('─────────────────────────────────────\n');
+    return;
+  }
+
+  const transporter = createTransporter();
+  const bookingUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/bookings`;
+
+  const mailOptions = {
+    from: `"ServiceHub" <${process.env.EMAIL_FROM || 'noreply@servicehub.com'}>`,
+    to,
+    subject,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #4F46E5; color: white; padding: 20px; text-align: center; }
+            .content { background-color: #f9f9f9; padding: 30px; }
+            .booking-details { background-color: white; padding: 20px; margin: 20px 0; border-radius: 5px; }
+            .detail-row { margin: 10px 0; }
+            .detail-label { font-weight: bold; color: #666; }
+            .button { display: inline-block; padding: 12px 30px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>${subject}</h1>
+            </div>
+            <div class="content">
+              <h2>Hi ${firstName},</h2>
+              <p>${message}</p>
+              <div class="booking-details">
+                <h3>Booking Details:</h3>
+                <div class="detail-row">
+                  <span class="detail-label">Service:</span> ${bookingDetails.serviceName}
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Date:</span> ${bookingDetails.serviceDate}
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Time:</span> ${bookingDetails.serviceTime}
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Address:</span> ${bookingDetails.address}
+                </div>
+              </div>
+              <div style="text-align: center;">
+                <a href="${bookingUrl}" class="button">View Booking</a>
+              </div>
+            </div>
+            <div class="footer">
+              <p>&copy; 2025 ServiceHub. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Booking notification email sent to ${to}`);
+  } catch (error) {
+    console.error('Error sending booking notification email:', error);
+    // In development mode, log even if email fails
+    if (process.env.NODE_ENV === 'development') {
+      console.log('\n📧 EMAIL FAILED - BOOKING NOTIFICATION (DEV MODE)');
+      console.log(`Email: ${to}`);
+      console.log(`Subject: ${subject}`);
+      console.log('─────────────────────────────────────\n');
+    }
+    // Don't throw error - notifications are non-critical
+  }
+};

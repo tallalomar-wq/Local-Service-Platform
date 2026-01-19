@@ -3,6 +3,8 @@ import { Booking, ProviderProfile, User, ServiceCategory, PaymentAdjustment } fr
 import { AuthRequest } from '../middleware/auth.middleware';
 import { Op } from 'sequelize';
 import { NotificationController } from './notification.controller';
+import { sendBookingNotificationEmail } from '../services/email.service';
+import { sendBookingNotification } from '../services/sms.service';
 
 export const createBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -46,6 +48,12 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
       paymentStatus: 'pending',
     });
 
+    // Get provider and service details for notifications
+    const providerWithUser = await ProviderProfile.findByPk(providerId, {
+      include: [{ model: User, as: 'user' }],
+    });
+    const serviceCategory = await ServiceCategory.findByPk(serviceCategoryId);
+
     // Send notification to provider
     await NotificationController.createNotification(
       providerId,
@@ -55,6 +63,34 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
       booking.id,
       'booking'
     );
+
+    // Send email and SMS notifications to provider
+    if (providerWithUser && serviceCategory) {
+      const providerUser = (providerWithUser as any).user;
+      const fullAddress = `${address}, ${city}, ${state} ${zipCode}`;
+      
+      // Send email
+      await sendBookingNotificationEmail(
+        providerUser.email,
+        providerUser.firstName,
+        'New Booking Request',
+        `You have received a new booking request from ${req.user.firstName} ${req.user.lastName}.`,
+        {
+          serviceDate,
+          serviceTime,
+          serviceName: serviceCategory.name,
+          address: fullAddress,
+        }
+      );
+
+      // Send SMS if provider has phone and it's verified
+      if (providerUser.phone && providerUser.phoneVerified) {
+        await sendBookingNotification(
+          providerUser.phone,
+          `ServiceHub: New booking request for ${serviceCategory.name} on ${serviceDate} at ${serviceTime}. Check your dashboard to respond.`
+        );
+      }
+    }
 
     res.status(201).json({
       message: 'Booking created successfully',
@@ -154,6 +190,30 @@ export const updateBookingStatus = async (req: AuthRequest, res: Response): Prom
 
     await booking.update(updates);
 
+    // Get booking details for notifications
+    const bookingWithDetails = await Booking.findByPk(id, {
+      include: [
+        { model: User, as: 'customer' },
+        { 
+          model: ProviderProfile, 
+          as: 'provider',
+          include: [{ model: User, as: 'user' }],
+        },
+        { model: ServiceCategory, as: 'serviceCategory' },
+      ],
+    });
+
+    if (!bookingWithDetails) {
+      res.status(404).json({ message: 'Booking not found' });
+      return;
+    }
+
+    const customer = (bookingWithDetails as any).customer;
+    const provider = (bookingWithDetails as any).provider;
+    const providerUser = provider?.user;
+    const serviceCategory = (bookingWithDetails as any).serviceCategory;
+    const fullAddress = `${bookingWithDetails.address}, ${bookingWithDetails.city}, ${bookingWithDetails.state} ${bookingWithDetails.zipCode}`;
+
     // Update provider stats if completed
     if (status === 'completed') {
       await ProviderProfile.increment('completedBookings', {
@@ -170,6 +230,29 @@ export const updateBookingStatus = async (req: AuthRequest, res: Response): Prom
         booking.id,
         'booking'
       );
+
+      // Send email and SMS to customer
+      if (customer && serviceCategory) {
+        await sendBookingNotificationEmail(
+          customer.email,
+          customer.firstName,
+          'Booking Completed',
+          `Your booking with ${providerUser?.firstName || 'the provider'} has been completed. We hope you had a great experience!`,
+          {
+            serviceDate: bookingWithDetails.serviceDate.toString(),
+            serviceTime: bookingWithDetails.serviceTime,
+            serviceName: serviceCategory.name,
+            address: fullAddress,
+          }
+        );
+
+        if (customer.phone && customer.phoneVerified) {
+          await sendBookingNotification(
+            customer.phone,
+            `ServiceHub: Your booking for ${serviceCategory.name} has been completed! Please leave a review.`
+          );
+        }
+      }
     } else if (status === 'accepted') {
       // Notify customer that booking was accepted
       await NotificationController.createNotification(
@@ -180,6 +263,29 @@ export const updateBookingStatus = async (req: AuthRequest, res: Response): Prom
         booking.id,
         'booking'
       );
+
+      // Send email and SMS to customer
+      if (customer && serviceCategory) {
+        await sendBookingNotificationEmail(
+          customer.email,
+          customer.firstName,
+          'Booking Accepted',
+          `Great news! ${providerUser?.firstName || 'The provider'} has accepted your booking request.`,
+          {
+            serviceDate: bookingWithDetails.serviceDate.toString(),
+            serviceTime: bookingWithDetails.serviceTime,
+            serviceName: serviceCategory.name,
+            address: fullAddress,
+          }
+        );
+
+        if (customer.phone && customer.phoneVerified) {
+          await sendBookingNotification(
+            customer.phone,
+            `ServiceHub: Your booking for ${serviceCategory.name} on ${bookingWithDetails.serviceDate} has been accepted!`
+          );
+        }
+      }
     } else if (status === 'cancelled') {
       // Notify both parties about cancellation
       const notifyUserId = req.user.role === 'provider' ? booking.customerId : booking.providerId;
@@ -191,6 +297,30 @@ export const updateBookingStatus = async (req: AuthRequest, res: Response): Prom
         booking.id,
         'booking'
       );
+
+      // Send email and SMS to the other party
+      const notifyUser = req.user.role === 'provider' ? customer : providerUser;
+      if (notifyUser && serviceCategory) {
+        await sendBookingNotificationEmail(
+          notifyUser.email,
+          notifyUser.firstName,
+          'Booking Cancelled',
+          `A booking for ${serviceCategory.name} has been cancelled${cancellationReason ? ': ' + cancellationReason : ''}.`,
+          {
+            serviceDate: bookingWithDetails.serviceDate.toString(),
+            serviceTime: bookingWithDetails.serviceTime,
+            serviceName: serviceCategory.name,
+            address: fullAddress,
+          }
+        );
+
+        if (notifyUser.phone && notifyUser.phoneVerified) {
+          await sendBookingNotification(
+            notifyUser.phone,
+            `ServiceHub: Your booking for ${serviceCategory.name} on ${bookingWithDetails.serviceDate} has been cancelled.`
+          );
+        }
+      }
     }
 
     res.json({

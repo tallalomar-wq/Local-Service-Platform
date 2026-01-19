@@ -28,9 +28,14 @@ export class NotificationController {
         notifications,
         unreadCount,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Get notifications error:', error);
-      res.status(500).json({ message: 'Failed to fetch notifications' });
+      // If table doesn't exist yet, return empty array
+      if (error.message && error.message.includes('does not exist')) {
+        res.json({ notifications: [], unreadCount: 0 });
+      } else {
+        res.status(500).json({ message: 'Failed to fetch notifications' });
+      }
     }
   }
 
@@ -116,8 +121,10 @@ export class NotificationController {
         relatedType,
         isRead: false,
       });
-    } catch (error) {
-      console.error('Create notification error:', error);
+      console.log(`✓ Notification created for user ${userId}: ${title}`);
+    } catch (error: any) {
+      console.error('Create notification error:', error.message);
+      // Don't throw error - notifications are non-critical, just log
     }
   }
 }

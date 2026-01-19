@@ -40,6 +40,7 @@ Notification.init(
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'user_id',
       references: {
         model: 'users',
         key: 'id',
@@ -60,10 +61,12 @@ Notification.init(
     relatedId: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      field: 'related_id',
     },
     relatedType: {
       type: DataTypes.STRING,
       allowNull: true,
+      field: 'related_type',
     },
     isRead: {
       type: DataTypes.BOOLEAN,
@@ -76,12 +79,13 @@ Notification.init(
     sequelize,
     tableName: 'notifications',
     timestamps: true,
+    underscored: true,
     indexes: [
       {
-        fields: ['userId', 'isRead'],
+        fields: ['user_id', 'is_read'],
       },
       {
-        fields: ['createdAt'],
+        fields: ['created_at'],
       },
     ],
   }
