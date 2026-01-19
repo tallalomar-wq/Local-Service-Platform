@@ -6,12 +6,13 @@ import api from '../../services/api';
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, user, logout } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasNewNotification, setHasNewNotification] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchUnreadCount();
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000);
+      // Poll for new notifications every 10 seconds (more frequent)
+      const interval = setInterval(fetchUnreadCount, 10000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
@@ -19,7 +20,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const fetchUnreadCount = async () => {
     try {
       const response = await api.get('/notifications?unreadOnly=true');
-      setUnreadCount(response.data.length);
+      const newCount = response.data.length;
+      
+      // Show animation if count increased
+      if (newCount > unreadCount && unreadCount > 0) {
+        setHasNewNotification(true);
+        // Play notification sound (optional)
+        setTimeout(() => setHasNewNotification(false), 3000);
+      }
+      
+      setUnreadCount(newCount);
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
     }
@@ -62,10 +72,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   <Link to="/bookings" className="text-gray-700 hover:text-primary-600">
                     My Bookings
                   </Link>
-                  <Link to="/notifications" className="relative text-gray-700 hover:text-primary-600">
+                  <Link 
+                    to="/notifications" 
+                    className={`relative text-gray-700 hover:text-primary-600 ${hasNewNotification ? 'animate-bounce' : ''}`}
+                    onClick={() => setHasNewNotification(false)}
+                  >
                     <span className="text-2xl">🔔</span>
                     {unreadCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                      <span className={`absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold ${hasNewNotification ? 'animate-ping' : ''}`}>
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}

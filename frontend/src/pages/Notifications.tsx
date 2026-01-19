@@ -22,6 +22,9 @@ const Notifications: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
+    // Auto-refresh every 15 seconds when on notifications page
+    const interval = setInterval(fetchNotifications, 15000);
+    return () => clearInterval(interval);
   }, [filter]);
 
   const fetchNotifications = async () => {

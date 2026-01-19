@@ -54,15 +54,18 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
     });
     const serviceCategory = await ServiceCategory.findByPk(serviceCategoryId);
 
-    // Send notification to provider
-    await NotificationController.createNotification(
-      providerId,
-      'booking',
-      'New Booking Request',
-      `You have a new booking request for ${serviceDate} at ${serviceTime}`,
-      booking.id,
-      'booking'
-    );
+    // Send notification to provider (use userId, not providerId)
+    const providerUserId = providerWithUser ? (providerWithUser as any).userId : null;
+    if (providerUserId) {
+      await NotificationController.createNotification(
+        providerUserId,
+        'booking',
+        'New Booking Request',
+        `You have a new booking request for ${serviceDate} at ${serviceTime}`,
+        booking.id,
+        'booking'
+      );
+    }
 
     // Send email and SMS notifications to provider
     if (providerWithUser && serviceCategory) {
