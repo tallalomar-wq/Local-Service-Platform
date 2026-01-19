@@ -258,6 +258,7 @@ export const updateBookingStatus = async (req: AuthRequest, res: Response): Prom
       }
     } else if (status === 'accepted') {
       // Notify customer that booking was accepted
+      console.log('Creating notification for customer:', booking.customerId);
       await NotificationController.createNotification(
         booking.customerId,
         'booking',
@@ -269,29 +270,48 @@ export const updateBookingStatus = async (req: AuthRequest, res: Response): Prom
 
       // Send email and SMS to customer
       if (customer && serviceCategory) {
-        await sendBookingNotificationEmail(
-          customer.email,
-          customer.firstName,
-          'Booking Accepted',
-          `Great news! ${providerUser?.firstName || 'The provider'} has accepted your booking request.`,
-          {
-            serviceDate: bookingWithDetails.serviceDate.toString(),
-            serviceTime: bookingWithDetails.serviceTime,
-            serviceName: serviceCategory.name,
-            address: fullAddress,
-          }
-        );
+        console.log('Sending email to customer:', customer.email);
+        try {
+          await sendBookingNotificationEmail(
+            customer.email,
+            customer.firstName,
+            'Booking Accepted',
+            `Great news! ${providerUser?.firstName || 'The provider'} has accepted your booking request.`,
+            {
+              serviceDate: bookingWithDetails.serviceDate.toString(),
+              serviceTime: bookingWithDetails.serviceTime,
+              serviceName: serviceCategory.name,
+              address: fullAddress,
+            }
+          );
+          console.log('Email sent successfully to:', customer.email);
+        } catch (emailError) {
+          console.error('Error sending email:', emailError);
+        }
 
         if (customer.phone && customer.phoneVerified) {
-          await sendBookingNotification(
-            customer.phone,
-            `ServiceHub: Your booking for ${serviceCategory.name} on ${bookingWithDetails.serviceDate} has been accepted!`
-          );
+          console.log('Sending SMS to customer:', customer.phone);
+          try {
+            await sendBookingNotification(
+              customer.phone,
+              `ServiceHub: Your booking for ${serviceCategory.name} on ${bookingWithDetails.serviceDate} has been accepted!`
+            );
+            console.log('SMS sent successfully to:', customer.phone);
+          } catch (smsError) {
+            console.error('Error sending SMS:', smsError);
+          }
         }
+      } else {
+        console.error('Missing customer or service category data for notification');
+        console.log('Customer:', customer);
+        console.log('Service Category:', serviceCategory);
       }
     } else if (status === 'cancelled') {
-      // Notify both parties about cancellation
-      const notifyUserId = req.user.role === 'provider' ? booking.customerId : booking.providerId;
+      // Notify the other party about cancellation
+      // If provider cancelled, notify customer. If customer cancelled, notify provider.
+      const notifyUserId = req.user.role === 'provider' ? booking.customerId : provider.userId;
+      console.log('Creating cancellation notification for user:', notifyUserId, 'Role who cancelled:', req.user.role);
+      
       await NotificationController.createNotification(
         notifyUserId,
         'booking',
@@ -304,25 +324,41 @@ export const updateBookingStatus = async (req: AuthRequest, res: Response): Prom
       // Send email and SMS to the other party
       const notifyUser = req.user.role === 'provider' ? customer : providerUser;
       if (notifyUser && serviceCategory) {
-        await sendBookingNotificationEmail(
-          notifyUser.email,
-          notifyUser.firstName,
-          'Booking Cancelled',
-          `A booking for ${serviceCategory.name} has been cancelled${cancellationReason ? ': ' + cancellationReason : ''}.`,
-          {
-            serviceDate: bookingWithDetails.serviceDate.toString(),
-            serviceTime: bookingWithDetails.serviceTime,
-            serviceName: serviceCategory.name,
-            address: fullAddress,
-          }
-        );
+        console.log('Sending cancellation email to:', notifyUser.email);
+        try {
+          await sendBookingNotificationEmail(
+            notifyUser.email,
+            notifyUser.firstName,
+            'Booking Cancelled',
+            `A booking for ${serviceCategory.name} has been cancelled${cancellationReason ? ': ' + cancellationReason : ''}.`,
+            {
+              serviceDate: bookingWithDetails.serviceDate.toString(),
+              serviceTime: bookingWithDetails.serviceTime,
+              serviceName: serviceCategory.name,
+              address: fullAddress,
+            }
+          );
+          console.log('Cancellation email sent successfully');
+        } catch (emailError) {
+          console.error('Error sending cancellation email:', emailError);
+        }
 
         if (notifyUser.phone && notifyUser.phoneVerified) {
-          await sendBookingNotification(
-            notifyUser.phone,
-            `ServiceHub: Your booking for ${serviceCategory.name} on ${bookingWithDetails.serviceDate} has been cancelled.`
-          );
+          console.log('Sending cancellation SMS to:', notifyUser.phone);
+          try {
+            await sendBookingNotification(
+              notifyUser.phone,
+              `ServiceHub: Your booking for ${serviceCategory.name} on ${bookingWithDetails.serviceDate} has been cancelled.`
+            );
+            console.log('Cancellation SMS sent successfully');
+          } catch (smsError) {
+            console.error('Error sending cancellation SMS:', smsError);
+          }
         }
+      } else {
+        console.error('Missing notifyUser or service category for cancellation');
+        console.log('notifyUser:', notifyUser);
+        console.log('Service Category:', serviceCategory);
       }
     }
 
