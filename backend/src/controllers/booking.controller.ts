@@ -256,8 +256,8 @@ export const updateBookingStatus = async (req: AuthRequest, res: Response): Prom
           );
         }
       }
-    } else if (status === 'accepted') {
-      // Notify customer that booking was accepted
+    } else if (status === 'accepted' || status === 'confirmed') {
+      // Notify customer that booking was accepted/confirmed
       console.log('Creating notification for customer:', booking.customerId);
       await NotificationController.createNotification(
         booking.customerId,
