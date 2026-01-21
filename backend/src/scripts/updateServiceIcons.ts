@@ -4,16 +4,16 @@ import { ServiceCategory } from '../models';
 // Map of service names to image paths
 // Script to update service category icons with real images
 const serviceIcons: { [key: string]: string } = {
-  'House Cleaning': '/images/services/house-cleaning.png',
-  'Lawn Care': '/images/services/lawn-care.png',
-  'Plumbing': '/images/services/plumbing.png',
-  'Electrical': '/images/services/electrical.png',
-  'Handyman': '/images/services/handyman.png',
-  'Pet Grooming': '/images/services/pet-grooming.png',
-  'Moving Services': '/images/services/moving.png',
-  'HVAC Services': '/images/services/hvac.png',
-  'Painting': '/images/services/painting.png',
-  'Carpet Cleaning': '/images/services/carpet-cleaning.png',
+  'House Cleaning': '/images/services/house-cleaning.svg',
+  'Lawn Care': '/images/services/lawn-care.svg',
+  'Plumbing': '/images/services/plumbing.svg',
+  'Electrical': '/images/services/electrical.svg',
+  'Handyman': '/images/services/handyman.svg',
+  'Pet Grooming': '/images/services/pet-grooming.svg',
+  'Moving Services': '/images/services/moving.svg',
+  'HVAC Services': '/images/services/hvac.svg',
+  'Painting': '/images/services/painting.svg',
+  'Carpet Cleaning': '/images/services/carpet-cleaning.svg',
 };
 
 async function updateServiceIcons() {
