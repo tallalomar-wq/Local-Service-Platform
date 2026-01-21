@@ -2,6 +2,7 @@ import { sequelize } from '../config/database';
 import { ServiceCategory } from '../models';
 
 // Map of service names to image paths
+// Script to update service category icons with real images
 const serviceIcons: { [key: string]: string } = {
   'House Cleaning': '/images/services/house-cleaning.png',
   'Lawn Care': '/images/services/lawn-care.png',
