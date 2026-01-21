@@ -52,7 +52,23 @@ const Services: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {services.map((service) => (
           <div key={service.id} className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-            <div className="text-5xl mb-4">{service.icon}</div>
+            <div className="mb-4 flex justify-center">
+              {service.icon && service.icon.startsWith('/images/') ? (
+                <img 
+                  src={service.icon} 
+                  alt={service.name}
+                  className="w-20 h-20 object-contain"
+                  onError={(e) => {
+                    // Fallback to emoji if image fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <div className={service.icon && service.icon.startsWith('/images/') ? 'hidden text-5xl' : 'text-5xl'}>
+                {service.icon && !service.icon.startsWith('/images/') ? service.icon : '🔧'}
+              </div>
+            </div>
             <h3 className="text-xl font-semibold mb-2">{service.name}</h3>
             <p className="text-gray-600 mb-4">{service.description}</p>
             <Link
